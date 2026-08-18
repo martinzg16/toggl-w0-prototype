@@ -202,12 +202,18 @@ user actually has.
 
 | | Metric | Why this one |
 |---|---|---|
-| **Primary** | % of new users who **adjust an estimate at least once** in days 0–7 | The activation signal for *this* feature: the user entered the loop rather than merely completing a field. Completion rate alone would look healthy while the feature did nothing. |
-| **Primary** | W0 return: % returning on ≥3 distinct days in week one | The brief's own definition. |
-| **Health** | Step completion vs. skip rate | The friction the step costs. High skip means the preview is not earning the field. |
-| **Health** | This week open rate, and repeat opens in week two | Whether the verdict became a reason to come back. |
-| **Counter** | Onboarding drop-off at the new step vs. baseline | The step's direct cost. **This is the number that kills the feature if it moves.** |
-| **Counter** | Share of projects where the pace is set once and never revisited | Would mean it degraded into a config field. |
+| **The goal** | **W0 retention** — % of new users who return and get value within seven days, measured as returning on ≥3 distinct days in week one | This is the outcome the feature is accountable for, and the brief's own definition. Everything below explains it; nothing below replaces it. |
+| **The mechanism** | % of new users who **adjust an estimate at least once** in days 0–7 | Tells us whether *this* feature is what moved the goal. A user who adjusts has entered the loop rather than merely completing a field — and completion rate alone would look healthy while the feature did nothing. |
+| Health | Step completion vs. skip rate | The friction the step costs. High skip means the preview is not earning the field. |
+| Health | This week open rate, and repeat opens in week two | Whether the verdict became a reason to come back. |
+| Counter | Onboarding drop-off at the new step vs. baseline | The step's direct cost. **This is the number that kills the feature if it moves.** |
+| Counter | Share of projects where the pace is set once and never revisited | Would mean it degraded into a config field. |
+
+Read the top two together. If W0 retention moves and estimate adjustment does
+not, something else caused it and this feature is not the reason to keep
+investing. If adjustment moves and retention does not, the loop is engaging
+people it does not ultimately hold — which is a copy and payoff problem, not a
+mechanism problem.
 
 **Stated assumption:** no baseline figures were available, so no targets are
 proposed. The instrumentation is the deliverable, not a forecast.
