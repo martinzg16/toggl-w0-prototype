@@ -6,7 +6,13 @@ import { TimerView } from "./views/TimerView";
 import { ProjectsView } from "./views/ProjectsView";
 import { TasksView } from "./views/TasksView";
 import { TimelineView } from "./views/TimelineView";
-import { PROJECT } from "./week/data";
+import { PROJECT, fmt } from "./week/data";
+import {
+  ApprovalIcon, AtIcon, BellIcon, BoardIcon, CalendarIcon, ChevronDown, ChevronLeft,
+  ChevronRight, ClockIcon, CollapseIcon, DollarIcon, GridIcon, ListIcon as ListViewIcon,
+  DownloadIcon, FolderIcon, GearIcon, HashIcon, HelpIcon, ListIcon, PalmIcon,
+  PersonIcon, PlusIcon, ReportIcon, SendIcon, StarIcon, TimelineIcon, UpgradeIcon,
+} from "./week/Icons";
 
 /**
  * Toggl 2.0 (Focus) — a solo user's first week, end to end.
@@ -60,28 +66,44 @@ export default function App() {
 function IconRail() {
   return (
     <div className="relative z-20 hidden w-12 shrink-0 flex-col items-center justify-between bg-tertiary py-4 md:flex">
-      <span className="flex size-6 flex-center rounded-full bg-brand-focus text-brand-toggl" aria-label="Toggl 2.0">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+      <span className="relative flex size-7 flex-center rounded-full bg-brand-focus text-brand-toggl" aria-label="Toggl 2.0">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
           <path d="M8 2.5v5" />
           <path d="M12.2 4.2a6 6 0 1 1-8.4 0" />
         </svg>
+        <span className="absolute -bottom-2 text-[0.5rem] font-bold text-accent">2.0</span>
       </span>
-      <span className="flex size-7 flex-center rounded-full bg-secondary-active text-h6 font-semibold text-secondary">
-        MZ
+
+      <span className="text-secondary" aria-hidden><CollapseIcon /></span>
+
+      <span className="flex flex-col items-center gap-4">
+        <span className="flex size-7 flex-center rounded-full bg-secondary-active text-h6 font-semibold text-secondary">MZ</span>
+        <span className="text-secondary" aria-hidden><BellIcon /></span>
+        <span className="text-secondary" aria-hidden><SendIcon /></span>
+        <span className="text-secondary" aria-hidden><HelpIcon /></span>
       </span>
     </div>
   );
 }
 
-const NAV: { section: string; items: { label: string; view: View }[] }[] = [
-  { section: "TRACK", items: [{ label: "Timer", view: "timer" }] },
-  { section: "ANALYZE", items: [{ label: "Reports", view: "reports" }] },
+type NavItem = { label: string; view?: View; icon: React.ReactNode; starred?: boolean };
+const NAV: { section: string; items: NavItem[] }[] = [
+  { section: "TRACK", items: [{ label: "Timer", view: "timer", icon: <ClockIcon /> }] },
+  { section: "ANALYZE", items: [{ label: "Reports", view: "reports", icon: <ReportIcon /> }] },
   {
     section: "PLAN",
     items: [
-      { label: "Projects", view: "projects" },
-      { label: "Tasks", view: "tasks" },
-      { label: "Timeline", view: "timeline" },
+      { label: "Projects", view: "projects", icon: <FolderIcon /> },
+      { label: "Tasks", view: "tasks", icon: <ListIcon /> },
+      { label: "Timeline", view: "timeline", icon: <TimelineIcon />, starred: true },
+    ],
+  },
+  {
+    section: "MANAGE",
+    items: [
+      { label: "Members", icon: <PersonIcon /> },
+      { label: "Approvals", icon: <ApprovalIcon />, starred: true },
+      { label: "Time off", icon: <PalmIcon />, starred: true },
     ],
   },
 ];
@@ -89,36 +111,63 @@ const NAV: { section: string; items: { label: string; view: View }[] }[] = [
 function Sidebar({ app }: { app: ReturnType<typeof useApp> }) {
   return (
     <aside className="hidden w-50 shrink-0 flex-col border-r border-primary bg-primary md:flex" aria-label="Main">
-      <div className="flex h-16 items-center px-4">
-        <span className="truncate text-p1 font-medium text-primary">Martín's workspace</span>
-      </div>
-      <nav className="flex flex-col gap-4 px-3 pb-4">
+      <button
+        type="button"
+        className="flex h-16 items-center gap-1.5 px-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-bg-accent"
+      >
+        <span className="truncate text-p1 font-semibold text-primary">Martinzg16's organi…</span>
+        <ChevronDown className="shrink-0 text-secondary" />
+      </button>
+
+      <nav className="flex flex-col gap-4 overflow-y-auto px-3 pb-4">
         {NAV.map(({ section, items }) => (
           <div key={section} className="flex flex-col gap-0.5">
             <span className="px-2 pb-1 text-h6 font-semibold tracking-wide text-secondary">{section}</span>
             {items.map((item) => {
-              const active = app.view === item.view;
+              const active = item.view && app.view === item.view;
+              const reachable = Boolean(item.view);
               return (
                 <button
                   key={item.label}
                   type="button"
-                  onClick={() => app.setView(item.view)}
+                  onClick={() => item.view && app.setView(item.view)}
                   aria-current={active ? "page" : undefined}
-                  className={`rounded px-2 py-1.5 text-left text-p1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                  aria-disabled={!reachable}
+                  className={`group flex items-center gap-2.5 rounded px-2 py-1.5 text-left text-p1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
                     active
                       ? "bg-muted font-medium text-accent"
-                      : "text-secondary hover:bg-primary-hover hover:text-primary"
+                      : reachable
+                        ? "text-secondary hover:bg-primary-hover hover:text-primary"
+                        : "cursor-default text-tertiary"
                   }`}
                 >
-                  {item.label}
+                  <span className="shrink-0">{item.icon}</span>
+                  <span className="min-w-0 flex-1 truncate">{item.label}</span>
+                  {item.starred && <StarIcon className="shrink-0 text-tertiary" />}
                 </button>
               );
             })}
           </div>
         ))}
       </nav>
-      <div className="mt-auto border-t border-primary px-4 py-3">
-        <p className="text-p2 text-secondary">Premium trial — 31 days left</p>
+
+      <div className="mt-auto flex flex-col gap-0.5 px-3 pb-3">
+        <button
+          type="button"
+          className="flex items-center gap-2.5 rounded px-2 py-1.5 text-left text-p1 font-medium text-accent outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
+        >
+          <UpgradeIcon className="shrink-0" />
+          <span className="flex-1">Upgrade</span>
+          <span className="rounded-full bg-muted px-1.5 py-0.5 text-h6 font-semibold tracking-wide text-accent">
+            31 DAYS
+          </span>
+        </button>
+        <span className="flex items-center gap-2.5 px-2 py-1.5 text-p1 text-tertiary">
+          <DownloadIcon className="shrink-0" /> Download apps
+        </span>
+        <span className="flex items-center gap-2.5 px-2 py-1.5 text-p1 text-tertiary">
+          <GearIcon className="shrink-0" /> Admin settings
+        </span>
       </div>
     </aside>
   );
@@ -153,7 +202,7 @@ function TimerBar({ app }: { app: ReturnType<typeof useApp> }) {
   };
 
   return (
-    <div className="flex h-16 shrink-0 items-center gap-3 border-b border-primary px-4 sm:px-8">
+    <div className="flex h-16 shrink-0 items-center gap-3 px-4 sm:px-8">
       <input
         value={running ? s.runningLabel : label}
         onChange={(e) => setLabel(e.target.value)}
@@ -162,17 +211,18 @@ function TimerBar({ app }: { app: ReturnType<typeof useApp> }) {
         aria-label="What are you working on?"
         className="min-w-0 flex-1 bg-transparent text-h3 text-primary outline-none placeholder:text-secondary"
       />
-      <span className="hidden items-center gap-2 sm:flex">
-        <span className="rounded border border-primary px-2.5 py-1 text-p2 text-secondary">{s.projectName}</span>
+      <span className="hidden items-center gap-2 lg:flex">
+        <Chip icon={<AtIcon />} label="Task" />
+        <Chip icon={<PlusIcon />} label={s.projectName || "Project"} filled={Boolean(s.projectName)} />
+        <Chip icon={<HashIcon />} label="Tags" />
+        <span className="px-1 text-secondary" aria-hidden><DollarIcon /></span>
       </span>
-      <span className="text-p1 font-medium text-primary tabular-nums">{clock}</span>
+      <span className="text-h3 text-primary tabular-nums">{clock}</span>
       <button
         type="button"
         onClick={toggle}
         aria-label={running ? "Stop timer" : "Start timer"}
-        className={`flex size-9 shrink-0 flex-center rounded-full outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
-          running ? "bg-accent text-inverted" : "border border-primary text-secondary hover:bg-primary-hover"
-        }`}
+        className="flex size-9 shrink-0 flex-center rounded-full bg-accent text-inverted outline-none transition-colors hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
       >
         {running ? (
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden>
@@ -188,38 +238,93 @@ function TimerBar({ app }: { app: ReturnType<typeof useApp> }) {
   );
 }
 
-const TITLES: Record<View, string> = {
-  timer: "Timer",
-  reports: "Reports",
-  projects: "Projects",
-  tasks: "Tasks",
-  timeline: "Timeline",
-};
+/** Toggl's dashed entry chips: an affordance to attach, not a filled control. */
+function Chip({ icon, label, filled }: { icon: React.ReactNode; label: string; filled?: boolean }) {
+  return (
+    <span
+      className={`flex items-center gap-1.5 rounded px-2.5 py-1.5 text-p1 ${
+        filled
+          ? "border border-primary bg-secondary text-primary"
+          : "border border-dashed border-primary text-secondary"
+      }`}
+    >
+      <span className="shrink-0 opacity-70">{icon}</span>
+      {label}
+    </span>
+  );
+}
 
 function Header({ app }: { app: ReturnType<typeof useApp> }) {
+  const { s } = app;
+  const logged = s.week
+    .slice(0, s.today + 1)
+    .flatMap((d) => d.segments)
+    .filter((sg) => sg.kind === "tracked" || s.claimed.has(sg.id))
+    .reduce((t, sg) => t + (sg.end - sg.start), 0);
+  const planned = s.week.flatMap((d) => d.segments).reduce((t, sg) => t + (sg.end - sg.start), 0);
+
   return (
-    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-primary bg-secondary px-4 sm:px-8">
-      <h2 className="text-h5 font-semibold text-primary">{TITLES[app.view]}</h2>
-      {app.view === "reports" && (
-        <span className="whitespace-nowrap rounded-sm border border-primary bg-primary px-1.5 py-0.5 text-h6 font-semibold tracking-wide text-secondary">
-          THIS WEEK
+    <div className="shrink-0 border-b border-primary">
+      {/* week navigation — Toggl's own period control */}
+      <div className="flex items-center gap-2 px-4 py-2 sm:px-8">
+        <span className="flex items-center gap-1 rounded border border-primary px-1 py-0.5">
+          <span className="flex size-6 flex-center text-secondary" aria-hidden><ChevronLeft /></span>
+          <span className="flex items-center gap-1.5 px-2 text-p1 text-primary">
+            <CalendarIcon className="text-secondary" />
+            This week <span className="text-secondary">• W34</span>
+          </span>
+          <span className="flex size-6 flex-center text-secondary" aria-hidden><ChevronRight /></span>
         </span>
-      )}
-      <nav className="ml-auto flex gap-1 md:hidden" aria-label="Sections">
-        {(Object.keys(TITLES) as View[]).map((v) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => app.setView(v)}
-            aria-current={app.view === v ? "page" : undefined}
-            className={`rounded px-2 py-1 text-h6 font-semibold tracking-wide outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
-              app.view === v ? "bg-accent text-inverted" : "text-secondary"
-            }`}
-          >
-            {TITLES[v].slice(0, 4).toUpperCase()}
-          </button>
-        ))}
-      </nav>
-    </header>
+
+        <span className="ml-auto hidden items-center gap-2 sm:flex">
+          <span className="flex items-center gap-1 rounded border border-primary px-2 py-1 text-p2 text-secondary">
+            5 Days <ChevronDown />
+          </span>
+          <span className="flex items-center gap-0.5 rounded border border-primary p-0.5">
+            {[
+              { id: "cal", icon: <CalendarIcon />, view: "timer" as View },
+              { id: "board", icon: <BoardIcon />, view: "timeline" as View },
+              { id: "list", icon: <ListViewIcon />, view: "tasks" as View },
+              { id: "grid", icon: <GridIcon />, view: "reports" as View },
+            ].map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                onClick={() => app.setView(v.view)}
+                aria-label={v.view}
+                aria-current={app.view === v.view ? "true" : undefined}
+                className={`flex size-7 flex-center rounded-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                  app.view === v.view ? "bg-muted text-accent" : "text-secondary hover:bg-primary-hover"
+                }`}
+              >
+                {v.icon}
+              </button>
+            ))}
+          </span>
+        </span>
+      </div>
+
+      {/* logged vs planned — the bar Toggl puts above every week */}
+      <div className="flex items-center gap-3 border-t border-primary bg-secondary px-4 py-2 text-p2 sm:px-8">
+        <span className="whitespace-nowrap text-secondary">
+          Logged <span className="font-medium text-primary tabular-nums">{fmt(logged)}</span>
+        </span>
+        <span className="hidden whitespace-nowrap text-secondary sm:inline">Planned</span>
+        <span className="hidden h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-secondary-active sm:block">
+          <span
+            className="block h-full rounded-full bg-inverted-secondary transition-all duration-300 ease-out"
+            style={{ width: `${Math.min(100, (logged / Math.max(planned, 1)) * 100)}%` }}
+          />
+        </span>
+        <span className="whitespace-nowrap text-secondary tabular-nums">{fmt(planned)}</span>
+        <button
+          type="button"
+          onClick={() => app.setView("reports")}
+          className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap rounded px-2 py-1 font-medium text-accent outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
+        >
+          View reports <ChevronRight className="size-3" />
+        </button>
+      </div>
+    </div>
   );
 }
