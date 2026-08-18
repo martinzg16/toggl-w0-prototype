@@ -3,6 +3,8 @@ import { BAND_END, BAND_START, WEEK as SEED, type Day, type Segment } from "./we
 
 export type View = "timer" | "reports" | "projects" | "tasks" | "timeline";
 export type Intent = "track" | "plan" | "projects";
+/** How the user arrived: with a Toggl Track history, or with nothing at all. */
+export type Origin = "imported" | "cold";
 
 export interface Task {
   id: string;
@@ -15,6 +17,7 @@ export interface Task {
 
 export interface AppState {
   onboarded: boolean;
+  origin: Origin;
   intent: Intent | null;
   calendarConnected: boolean;
   projectName: string;
@@ -29,15 +32,19 @@ export interface AppState {
   runningLabel: string;
 }
 
-const SEED_TASKS: Task[] = [
-  { id: "k1", name: "Logo refinement", done: true, estimate: 180, plannedDay: 3 },
-  { id: "k2", name: "Brand guidelines draft", done: false, estimate: 240, plannedDay: 4 },
-  { id: "k3", name: "Handoff prep", done: false, estimate: 90, plannedDay: 4 },
-];
+/** Nothing is seeded. A cold-start user types their own. */
+const SEED_TASKS: Task[] = [];
+
+/**
+ * What an imported Track history can tell you that a cold start cannot: how
+ * long work like this actually took last time. Same field, different source.
+ */
+export const IMPORT_SUGGESTION = { minutes: 14 * 60, basis: "8 weeks of Toggl Track history" };
 
 export function useApp() {
   const [s, setS] = useState<AppState>({
     onboarded: false,
+    origin: "cold",
     intent: null,
     calendarConnected: false,
     projectName: "",
@@ -52,7 +59,13 @@ export function useApp() {
   const [view, setView] = useState<View>("reports");
 
   const finishOnboarding = useCallback(
-    (o: { intent: Intent; calendarConnected: boolean; projectName: string; projectEstimate: number }) => {
+    (o: {
+      origin: Origin;
+      intent: Intent;
+      calendarConnected: boolean;
+      projectName: string;
+      projectEstimate: number;
+    }) => {
       setS((p) => ({ ...p, ...o, onboarded: true }));
       setView(o.intent === "track" ? "reports" : o.intent === "plan" ? "tasks" : "projects");
     },

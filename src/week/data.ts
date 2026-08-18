@@ -25,10 +25,6 @@ export interface Day {
 }
 
 export const PROJECT = {
-  name: "Acme rebrand",
-  client: "Acme Corp",
-  /** what the user typed in onboarding's "Create your first project" step */
-  estimateMinutes: 10 * 60,
   /** the project colour ramp, in Toggl's own --*-data-* contract */
   colour: {
     "--foreground-data-light": "138 20 138",
@@ -51,8 +47,7 @@ export const WEEK: Day[] = [
     workStart: h(9),
     workEnd: h(18),
     segments: [
-      { id: "m1", start: h(9, 30), end: h(11), label: "Kickoff & brand audit", kind: "tracked" },
-      { id: "m2", start: h(14), end: h(15), label: "Moodboards", kind: "tracked" },
+      { id: "m1", start: h(11), end: h(12), label: "Kickoff call", kind: "calendar", source: "Google Calendar" },
     ],
   },
   {
@@ -61,20 +56,18 @@ export const WEEK: Day[] = [
     workStart: h(9),
     workEnd: h(18),
     segments: [
-      { id: "t1", start: h(9), end: h(10), label: "Logo exploration", kind: "tracked" },
-      { id: "t2", start: h(11), end: h(12), label: "Acme weekly sync", kind: "calendar", source: "Google Calendar" },
-      { id: "t3", start: h(15), end: h(16, 30), label: "Design review with Priya", kind: "calendar", source: "Google Calendar" },
+      { id: "t1", start: h(11), end: h(12), label: "Weekly client sync", kind: "calendar", source: "Google Calendar" },
+      { id: "t2", start: h(15), end: h(16, 30), label: "Design review with Priya", kind: "calendar", source: "Google Calendar" },
     ],
   },
   {
-    // the day the loop breaks: they worked, they forgot, the ribbon is a hole
     weekday: "Wed",
     date: 19,
     workStart: h(9),
     workEnd: h(18),
     segments: [
       { id: "w1", start: h(10), end: h(12, 30), label: "Type system workshop", kind: "calendar", source: "Google Calendar" },
-      { id: "w2", start: h(14), end: h(15, 30), label: "Acme stakeholder call", kind: "calendar", source: "Google Calendar" },
+      { id: "w2", start: h(14), end: h(15, 30), label: "Stakeholder call", kind: "calendar", source: "Google Calendar" },
     ],
   },
   {
@@ -83,8 +76,8 @@ export const WEEK: Day[] = [
     workStart: h(9),
     workEnd: h(18),
     segments: [
-      { id: "th1", start: h(9, 30), end: h(12, 30), label: "Logo refinement", kind: "tracked" },
-      { id: "th2", start: h(16), end: h(17), label: "Colour system", kind: "calendar", source: "Google Calendar" },
+      { id: "th1", start: h(9, 30), end: h(10, 30), label: "Client standup", kind: "calendar", source: "Google Calendar" },
+      { id: "th2", start: h(16), end: h(17), label: "Colour system review", kind: "calendar", source: "Google Calendar" },
     ],
   },
   {
@@ -93,8 +86,7 @@ export const WEEK: Day[] = [
     workStart: h(9),
     workEnd: h(17),
     segments: [
-      { id: "f1", start: h(10), end: h(12), label: "Brand guidelines draft", kind: "tracked" },
-      { id: "f2", start: h(14), end: h(15, 30), label: "Handoff prep", kind: "tracked" },
+      { id: "f1", start: h(10), end: h(11), label: "Handoff walkthrough", kind: "calendar", source: "Google Calendar" },
     ],
   },
   { weekday: "Sat", date: 22, workStart: 0, workEnd: 0, segments: [] },

@@ -96,6 +96,21 @@ export function statement(s: WeekState): Statement {
     };
   }
 
+  // The cold start: nothing tracked, and the calendar is the only history
+  // this user owns. Say that plainly rather than reporting a zero.
+  if (tracked === 0 && missing > 0) {
+    return {
+      line: `You haven't logged anything yet — but your calendar already knows about ${fmt(missing)} of ${s.projectName}.`,
+      action: "repair",
+    };
+  }
+
+  if (tracked === 0 && missing === 0) {
+    return {
+      line: `Nothing logged against ${s.projectName} yet. Start the timer, and this week starts measuring itself against your ${fmt(est)}.`,
+    };
+  }
+
   if (missing >= 120) {
     return {
       line: `${fmt(missing)} of your week is unaccounted for. Your calendar knows what it was.`,
