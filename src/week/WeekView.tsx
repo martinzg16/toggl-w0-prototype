@@ -169,11 +169,11 @@ function Repair({
               onMouseLeave={() => onFocus(null)}
               onFocus={() => onFocus(seg.id)}
               onBlur={() => onFocus(null)}
-              className={`group flex w-full items-center gap-3 rounded px-2 py-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent-hover ${
+              className={`group flex w-full items-center gap-3 rounded px-2 py-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
                 focused === seg.id ? "bg-primary-hover" : "hover:bg-primary-hover"
               }`}
             >
-              <span className="w-10 shrink-0 text-p2 text-tertiary tabular-nums">{WEEK[dayIndex].weekday}</span>
+              <span className="w-10 shrink-0 text-p2 text-secondary tabular-nums">{WEEK[dayIndex].weekday}</span>
               <span className="min-w-0 flex-1 truncate text-p1 text-primary">{seg.label}</span>
               <span className="shrink-0 text-p2 text-secondary tabular-nums">{fmt(minutesOf(seg))}</span>
               <span className="flex shrink-0 items-center gap-1 rounded bg-secondary px-2 py-1 text-h6 font-semibold tracking-wide text-secondary transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100">
@@ -219,7 +219,7 @@ function Scrubber({ today, onChange }: { today: number; onChange: (i: number) =>
             type="button"
             onClick={() => onChange(i)}
             aria-current={i === today}
-            className={`flex-1 rounded px-2 py-1 text-p2 lg:flex-none lg:px-2.5 font-medium tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent-hover ${
+            className={`flex-1 rounded px-2 py-1 text-p2 lg:flex-none lg:px-2.5 font-medium tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
               i === today
                 ? "bg-accent text-inverted"
                 : i < today
