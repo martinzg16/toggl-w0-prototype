@@ -39,7 +39,7 @@
 /* Toggl ships this shorthand and uses it throughout */
 @utility flex-center { justify-content: center; align-items: center; }
 
-html { color-scheme: light dark; }
+html { color-scheme: light; }
 
 body {
   margin: 0;
@@ -48,4 +48,11 @@ body {
   line-height: 20px;
   background: rgb(var(--background-primary));
   color: rgb(var(--foreground-primary));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

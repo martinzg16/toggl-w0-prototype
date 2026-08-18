@@ -22,7 +22,7 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
             return (
               <span
                 key={hr}
-                className={`absolute text-h6 font-semibold tracking-wide text-tertiary tabular-nums ${
+                className={`absolute text-h6 font-semibold tracking-wide text-secondary tabular-nums ${
                   last ? "-translate-x-full" : "-translate-x-1/2"
                 } ${hr === 12 || last ? "" : "hidden sm:inline"}`}
                 style={{ left: `${pct(hr * 60)}%` }}
@@ -38,6 +38,7 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
         {WEEK.map((day, i) => {
           const isPast = i <= state.today;
           const isToday = i === state.today;
+          const offDay = day.workEnd === day.workStart;
           const workLeft = pct(day.workStart);
           const workRight = pct(day.workEnd);
 
@@ -46,24 +47,30 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
               <div className="flex w-16 shrink-0 items-center gap-1.5 py-1">
                 <span
                   className={`text-p2 font-medium tabular-nums ${
-                    isToday ? "text-primary" : isPast ? "text-secondary" : "text-tertiary"
+                    isToday ? "text-primary" : "text-secondary"
                   }`}
                 >
                   {day.weekday}
                 </span>
-                <span className={`text-p2 tabular-nums ${isToday ? "text-primary" : "text-tertiary"}`}>
+                <span className={`text-p2 tabular-nums ${isToday ? "text-primary" : "text-secondary"}`}>
                   {day.date}
                 </span>
               </div>
 
               <div className="relative flex-1 py-1">
-                {/* the working window: the denominator, drawn as ground */}
-                <div
-                  className={`absolute inset-y-1 rounded-sm ${
-                    isPast ? "bg-secondary-hover" : "bg-secondary"
-                  }`}
-                  style={{ left: `${workLeft}%`, width: `${workRight - workLeft}%` }}
-                />
+                {offDay ? (
+                  <span className="flex h-full items-center text-h6 font-semibold tracking-wide text-tertiary">
+                    NO WORKING HOURS
+                  </span>
+                ) : (
+                  /* the working window: the denominator, drawn as ground */
+                  <div
+                    className={`absolute inset-y-1 rounded-sm ${
+                      isPast ? "bg-secondary-hover" : "bg-secondary"
+                    }`}
+                    style={{ left: `${workLeft}%`, width: `${workRight - workLeft}%` }}
+                  />
+                )}
 
                 {isPast &&
                   day.segments.map((seg) => (
@@ -77,7 +84,7 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
                     />
                   ))}
 
-                {isToday && <div className="absolute inset-y-0 w-px bg-accent" style={{ left: `${workRight}%` }} />}
+
               </div>
             </div>
           );
@@ -110,7 +117,7 @@ function Block({
   if (solid) {
     return (
       <div
-        className={`${shared} bg-data ${claimed ? "ring-2 ring-accent" : ""}`}
+        className={`${shared} bg-data`}
         style={style}
         title={`${seg.label} · ${fmt(minutesOf(seg))}`}
       />
