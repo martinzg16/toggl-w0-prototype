@@ -188,7 +188,6 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 function TimerBar({ app }: { app: ReturnType<typeof useApp> }) {
   const { s } = app;
-  const [label, setLabel] = useState("");
   const [, tick] = useState(0);
 
   useEffect(() => {
@@ -206,8 +205,7 @@ function TimerBar({ app }: { app: ReturnType<typeof useApp> }) {
       app.stopTimer();
       app.setView("reports");
     } else {
-      app.startTimer(label.trim() || "Untitled");
-      setLabel("");
+      app.startTimer(s.draftLabel.trim() || "Untitled");
       app.setView("timer");
     }
   };
@@ -215,8 +213,8 @@ function TimerBar({ app }: { app: ReturnType<typeof useApp> }) {
   return (
     <div className="flex h-16 shrink-0 items-center gap-3 px-4 sm:px-8">
       <input
-        value={running ? s.runningLabel : label}
-        onChange={(e) => setLabel(e.target.value)}
+        value={running ? s.runningLabel : s.draftLabel}
+        onChange={(e) => app.setDraftLabel(e.target.value)}
         readOnly={running}
         placeholder="What are you working on?"
         aria-label="What are you working on?"
