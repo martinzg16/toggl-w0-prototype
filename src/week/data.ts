@@ -103,6 +103,11 @@ export const GRID_END = h(20);
 
 export const minutesOf = (s: Segment) => s.end - s.start;
 
+/** What a segment counts for: the logged duration when the user settled on
+ *  one, otherwise the slot it occupies. */
+export const countedMinutes = (s: Segment, durations: Record<string, number> = {}) =>
+  durations[s.id] ?? s.end - s.start;
+
 export function fmt(mins: number) {
   const hrs = Math.floor(mins / 60);
   const m = Math.round(mins % 60);

@@ -1,4 +1,4 @@
-import { minutesOf, fmt, type Day } from "./data";
+import { countedMinutes, minutesOf, fmt, type Day } from "./data";
 
 export interface WeekState {
   /** 0-indexed day the user is currently living in */
@@ -6,6 +6,8 @@ export interface WeekState {
   /** ids of calendar segments the user has confirmed into tracked time */
   claimed: Set<string>;
   week: Day[];
+  /** minutes the user settled on per claimed segment */
+  claimDurations: Record<string, number>;
   projectName: string;
   /** minutes, captured at project creation in onboarding */
   estimate: number;
@@ -17,7 +19,7 @@ export const trackedMinutes = (s: WeekState) =>
   upTo(s)
     .flatMap((d) => d.segments)
     .filter((seg) => seg.kind === "tracked" || s.claimed.has(seg.id))
-    .reduce((t, seg) => t + minutesOf(seg), 0);
+    .reduce((t, seg) => t + countedMinutes(seg, s.claimDurations), 0);
 
 /** Time the calendar knows about but that was never logged. The hole. */
 export const unclaimedMinutes = (s: WeekState) =>

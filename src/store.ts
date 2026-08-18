@@ -26,6 +26,8 @@ export interface AppState {
   projectEstimate: number;
   /** what kind of contract this is — the same number reads differently per kind */
   projectKind: Kind;
+  /** hourly rate, set in Projects. Null until the user prices the work. */
+  projectRate: number | null;
   /** true when the user skipped the commitment step; nothing is punished for it */
   paceSkipped: boolean;
   /** ids the user chose to keep as-is; a closed question must not be re-raised */
@@ -35,6 +37,8 @@ export interface AppState {
   week: Day[];
   today: number;
   claimed: Set<string>;
+  /** minutes the user settled on when logging, when it differs from the slot */
+  claimDurations: Record<string, number>;
   tasks: Task[];
   /** the post-onboarding walkthrough runs once, for both entry paths */
   tourActive: boolean;
@@ -61,6 +65,7 @@ export const COMPANIONS: WeekProject[] = [
     kind: "retainer",
     planned: 4,
     tracked: 2.5,
+    rate: 90,
     colour: {
       "--foreground-data-light": "20 90 138", "--foreground-data-dark": "191 219 238",
       "--background-data-light": "26 116 183", "--background-data-dark": "124 178 228",
@@ -75,6 +80,7 @@ export const COMPANIONS: WeekProject[] = [
     kind: "personal",
     planned: 3,
     tracked: 1.5,
+    rate: null,
     colour: {
       "--foreground-data-light": "20 110 70", "--foreground-data-dark": "180 226 200",
       "--background-data-light": "26 140 88", "--background-data-dark": "120 200 160",
@@ -113,7 +119,9 @@ export function useApp() {
     projectName: "",
     projectEstimate: 0,
     projectKind: "fixed",
+    projectRate: null,
     paceSkipped: false,
+    claimDurations: {},
     dismissed: new Set(),
     recalibrated: {},
     week: SEED,
@@ -183,8 +191,14 @@ export function useApp() {
     });
   }, []);
 
-  const claim = useCallback((id: string) => {
-    setS((p) => ({ ...p, claimed: new Set(p.claimed).add(id) }));
+  /** A booked slot is not a measurement. Logging one records how long it
+   *  actually took, which may not be how long it was scheduled for. */
+  const claim = useCallback((id: string, minutes?: number) => {
+    setS((p) => ({
+      ...p,
+      claimed: new Set(p.claimed).add(id),
+      claimDurations: minutes == null ? p.claimDurations : { ...p.claimDurations, [id]: minutes },
+    }));
   }, []);
 
   const claimMany = useCallback((ids: string[]) => {
@@ -210,6 +224,7 @@ export function useApp() {
 
   const setToday = useCallback((today: number) => setS((p) => ({ ...p, today })), []);
   const setEstimate = useCallback((m: number) => setS((p) => ({ ...p, projectEstimate: m })), []);
+  const setRate = useCallback((r: number | null) => setS((p) => ({ ...p, projectRate: r })), []);
   const toggleTask = useCallback((id: string) => {
     setS((p) => ({ ...p, tasks: p.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)) }));
   }, []);
@@ -223,10 +238,10 @@ export function useApp() {
   return useMemo(
     () => ({
       s, view, setView, finishOnboarding, startTimer, stopTimer, addEntry, setDraftLabel,
-      claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs,
+      claim, claimMany, setToday, setEstimate, setRate, toggleTask, addTask, recalibrate, keepAsIs,
       endTour, startTour,
     }),
-    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, setDraftLabel, claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs, endTour, startTour],
+    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, setDraftLabel, claim, claimMany, setToday, setEstimate, setRate, toggleTask, addTask, recalibrate, keepAsIs, endTour, startTour],
   );
 }
 

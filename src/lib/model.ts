@@ -110,6 +110,8 @@ export interface WeekProject {
   kind: Kind;
   planned: number;
   tracked: number;
+  /** hourly rate, when the project has one. Null means no revenue story. */
+  rate?: number | null;
   /** the --*-data-* ramp this project paints with */
   colour: Record<string, string>;
 }
@@ -145,3 +147,136 @@ export const TONE_CLASS: Record<Tone, { text: string; bar: string }> = {
   good: { text: "text-success", bar: "bg-success" },
   neutral: { text: "text-accent", bar: "bg-accent" },
 };
+
+/* ── Proposing a duration when a booked slot gets logged ─────────────── */
+
+export interface Proposal {
+  /** minutes we think it actually took */
+  minutes: number;
+  /** the evidence, in the user's terms — never "our algorithm says" */
+  reason: string;
+  /** false when we are only echoing the slot back, which is not a finding */
+  evidenced: boolean;
+}
+
+const words = (s: string) =>
+  new Set(s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length > 3));
+
+const overlap = (a: string, b: string) => {
+  const x = words(a);
+  const y = words(b);
+  if (!x.size || !y.size) return 0;
+  let hit = 0;
+  x.forEach((w) => y.has(w) && hit++);
+  return hit / Math.min(x.size, y.size);
+};
+
+/**
+ * A calendar slot records when something was booked, not how long it took.
+ * Logging one silently launders an estimate into a fact, so we propose a
+ * duration from whatever evidence exists and let the user settle it.
+ *
+ * Priority: something like it that was already logged, then this user's own
+ * habit of trimming or overrunning, then the slot itself — said plainly as
+ * the slot, because echoing an input back is not an insight.
+ */
+export function proposeDuration(
+  target: { id: string; label: string; slotMinutes: number },
+  history: { label: string; minutes: number; slotMinutes?: number }[],
+): Proposal {
+  const like = history
+    .map((h) => ({ h, score: overlap(target.label, h.label) }))
+    .filter((x) => x.score >= 0.5)
+    .sort((a, b) => b.score - a.score)[0];
+
+  if (like) {
+    return {
+      minutes: like.h.minutes,
+      reason: `You logged “${like.h.label}” at ${fmtMins(like.h.minutes)}.`,
+      evidenced: true,
+    };
+  }
+
+  const adjusted = history.filter((h) => h.slotMinutes && h.slotMinutes !== h.minutes);
+  if (adjusted.length >= 2) {
+    const ratio =
+      adjusted.reduce((t, h) => t + h.minutes / (h.slotMinutes as number), 0) / adjusted.length;
+    const rounded = Math.max(15, Math.round((target.slotMinutes * ratio) / 5) * 5);
+    if (rounded !== target.slotMinutes) {
+      const dir = ratio < 1 ? "shorter" : "longer";
+      const pctOff = Math.round(Math.abs(1 - ratio) * 100);
+      return {
+        minutes: rounded,
+        reason: `Your logged meetings run about ${pctOff}% ${dir} than they're booked for.`,
+        evidenced: true,
+      };
+    }
+  }
+
+  return {
+    minutes: target.slotMinutes,
+    reason: `Booked for ${fmtMins(target.slotMinutes)} — that's the slot, not the work.`,
+    evidenced: false,
+  };
+}
+
+const fmtMins = (m: number) => {
+  const h = Math.floor(m / 60);
+  const r = Math.round(m % 60);
+  if (!h) return `${r}m`;
+  return r ? `${h}h ${r}m` : `${h}h`;
+};
+
+/* ── What the deviation costs ────────────────────────────────────────── */
+
+export interface Money {
+  /** absolute dollars at stake */
+  amount: number;
+  /** what those dollars are, in the user's terms */
+  label: string;
+  /** true when the money is working against the user */
+  adverse: boolean;
+}
+
+export const money = (n: number) =>
+  `$${Math.round(n).toLocaleString("en-US")}`;
+
+/**
+ * Hours are the mechanism; money is why anyone cares. A rate turns "6h over"
+ * into "$480 of margin gone", which is the sentence a freelancer acts on.
+ *
+ * Returns null without a rate rather than inventing one — an unpriced project
+ * has no revenue story, and guessing would be worse than silence.
+ */
+export function revenueImpact(
+  kind: Kind,
+  planned: number,
+  tracked: number,
+  rate: number | null,
+): Money | null {
+  if (!rate || kind === "personal") return null;
+  const gap = Math.round(Math.abs(tracked - planned) * 10) / 10;
+  if (gap < NOISE_FLOOR_HOURS) return null;
+
+  const over = tracked > planned;
+  const amount = gap * rate;
+
+  if (kind === "fixed") {
+    return over
+      ? { amount, label: `${money(amount)} of margin gone at ${money(rate)}/h`, adverse: true }
+      : { amount, label: `${money(amount)} you priced for and didn't spend`, adverse: false };
+  }
+
+  return over
+    ? { amount, label: `${money(amount)} of unbilled hours at ${money(rate)}/h`, adverse: true }
+    : { amount, label: `${money(amount)} of capacity you carried unbilled`, adverse: true };
+}
+
+/** The week's net position, counting only what works against the user. */
+export function revenueAtRisk(projects: WeekProject[], dismissed: Set<string> = new Set()) {
+  return projects.reduce((total, p) => {
+    if (dismissed.has(p.id)) return total;
+    const m = revenueImpact(p.kind, p.planned, p.tracked, p.rate ?? null);
+    return m?.adverse ? total + m.amount : total;
+  }, 0);
+}
