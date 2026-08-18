@@ -149,7 +149,12 @@ on every day of week one ("6 of 10 so far"); a total budget reads as 5% consumed
 and says nothing until the job is nearly done. Money (quoted fee + hourly rate)
 is strictly more powerful — it yields margin on day one — but it is two more
 fields, it is sensitive, and the rate is already collected elsewhere in Toggl.
-**Money is the correct v2**, once this step has earned its place.
+**Money is now built — but not here.** The hourly rate lives in Projects,
+where Toggl already keeps billable rates, and the Friday verdict reads the
+deviation in dollars when one is set. Keeping it out of this step is the
+point: the commitment step stays at two fields, and money arrives once the
+user has a reason to price the work. A quoted fixed fee, which would give true
+margin rather than the cost of an overrun, remains open.
 
 **Non-negotiable interaction rules:**
 

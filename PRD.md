@@ -155,6 +155,22 @@ user is told their projects came across with no tasks; a cold user is told what
 to break the project into. It exists because the commitment step buys a verdict
 the user has to be able to find.
 
+**Logging is a question, not an assumption.** A calendar slot records when
+something was *booked*, not how long it *took*. Accepting one silently would
+launder an estimate into a measurement, so logging opens a proposal with its
+evidence attached: something similar already logged, then this user's own habit
+of running short or long, and failing both, the slot said plainly as the slot —
+*"Booked for 1h, that's the slot, not the work."* The cold-start case gets the
+honest answer rather than a dressed-up input.
+
+**Money, where the rate already lives.** Hours are the mechanism; money is why
+anyone acts. With an hourly rate the same deviation reads as *"$480 of margin
+gone"* on a fixed price, or *"$135 of capacity you carried unbilled"* on a
+retainer. The rate sits in **Projects, not onboarding** — the commitment step
+has to justify its own existence and two more fields would sink it, and Toggl
+already keeps billable rates on the project. With no rate the verdict reports
+hours and says so; it never invents one.
+
 **The calibration loop** is the retention mechanic. Every flagged project
 offers two real actions: **Make it {tracked}h a week** rewrites the plan and
 the week's arithmetic recomputes live; **Keep {planned}h** closes the question
@@ -182,8 +198,9 @@ against which captured time means something.
 
 ## 5. Scope
 
-**In:** the commitment step; the guided tour; the This week verdict; the
-calibration loop; the two entry paths (import a Toggl Track history, or start cold); per-project
+**In:** the commitment step; the guided tour; the This week verdict with its
+revenue reading; the duration proposal when a slot is logged; the calibration
+loop; the two entry paths (import a Toggl Track history, or start cold); per-project
 `kind` and `plannedHoursPerWeek`, editable after onboarding.
 
 **Out:** bulk import, connectors, invoicing, client sharing, profitability,
@@ -227,21 +244,26 @@ proposed. The instrumentation is the deliverable, not a forecast.
 2. **Guilt.** Watch for it in copy review: the verdict describes a number, never
    the person. *"This job is costing you 60% more than you priced"* is about the
    job. *"You're behind"* would be about them.
-3. **Noisy verdicts from bad day-zero estimates.** Intended — calibration is the
+3. **A rate makes the verdict louder.** Money is more motivating than hours and
+   also more accusing. The copy still describes the job, never the person —
+   *"$480 of margin gone"* is about the job — but this is the line to watch in
+   review if the tone ever slips.
+4. **Noisy verdicts from bad day-zero estimates.** Intended — calibration is the
    mechanism. But if accept rates on *update* stay near 100% for weeks, the ask
    is producing a number nobody owns and the presets need reconsidering.
-4. **Incomplete week-one tracking.** The verdict sits on a log with holes. The
+5. **Incomplete week-one tracking.** The verdict sits on a log with holes. The
    caveat line is where a day-reconstruction flow attaches later.
-5. **Three contract kinds is a simplification.** Real work is messier. Three is
+6. **Three contract kinds is a simplification.** Real work is messier. Three is
    the most that can be asked without a second screen.
 
 ---
 
 ## 8. Open questions
 
-- Should the ask move to money (quoted fee + rate) once validated? It yields
-  margin on day one, which is strictly more valuable than hours — but it is two
-  more fields and the rate is already collected elsewhere.
+- Should a quoted **fixed fee** join the hourly rate? Rate gives the cost of an
+  overrun; a fee would give true margin, and turn "60% over" into a percentage
+  of the actual job. It is one more field, and unlike the rate it has no home
+  in Toggl today.
 - Should a deadline field derive the *required* pace, catching overcommitment
   before it happens rather than after?
 - Should the verdict also arrive as an email, or does that break the
