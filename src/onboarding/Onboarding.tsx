@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { IMPORT_SUGGESTION, type Intent, type Origin } from "../store";
+import { IMPORTED_PROJECTS, type Intent, type Origin } from "../store";
+import { PROJECT } from "../week/data";
 import { CalendarIcon, CheckIcon } from "../week/Icons";
 
 /**
@@ -25,14 +26,21 @@ export function Onboarding({
   const [name, setName] = useState("");
   const [hours, setHours] = useState("");
 
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  /** explicit, so nothing is selected on arrival */
+  const [wantsNew, setWantsNew] = useState(false);
   const imported = origin === "imported";
-  const suggested = Math.round(IMPORT_SUGGESTION.minutes / 60);
+  const picked = IMPORTED_PROJECTS.find((x) => x.id === pickedId) ?? null;
+  const suggested = picked ? Math.round(picked.avgMinutes / 60) : null;
   const total = 5;
   const next = () => setStep((s) => s + 1);
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-10">
+    <div
+      className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-10"
+      style={PROJECT.colour as React.CSSProperties}
+    >
       <div className="w-full max-w-125 rounded-md border border-primary bg-primary px-8 py-10 shadow-raised-20">
         {step > 0 && (
           <p className="mb-6 text-h6 font-semibold tracking-wide text-secondary">
@@ -100,10 +108,7 @@ export function Onboarding({
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setOrigin("imported");
-                  setHours(String(suggested));
-                }}
+                onClick={() => setOrigin("imported")}
                 aria-pressed={origin === "imported"}
                 className={`rounded border px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
                   origin === "imported" ? "border-accent bg-muted" : "border-primary hover:bg-primary-hover"
@@ -118,6 +123,9 @@ export function Onboarding({
                 type="button"
                 onClick={() => {
                   setOrigin("cold");
+                  setPickedId(null);
+                  setWantsNew(false);
+                  setName("");
                   setHours("");
                 }}
                 aria-pressed={origin === "cold"}
@@ -132,7 +140,7 @@ export function Onboarding({
             {origin === "imported" && (
               <p className="flex items-center gap-2 text-p2 text-success">
                 <CheckIcon className="size-3.5 shrink-0" />
-                {IMPORT_SUGGESTION.basis} imported.
+                {IMPORTED_PROJECTS.length} projects and their history imported.
               </p>
             )}
           </Step>
@@ -171,7 +179,80 @@ export function Onboarding({
           </Step>
         )}
 
-        {step === 4 && (
+        {step === 4 && imported && (
+          <Step
+            title="Which project are you picking up?"
+            sub="These came across from Toggl Track. Start with the one you are working on this week."
+            onBack={back}
+            onNext={next}
+            nextDisabled={!name.trim()}
+          >
+            <div className="flex flex-col gap-2">
+              {IMPORTED_PROJECTS.map((proj) => {
+                const on = pickedId === proj.id;
+                return (
+                  <button
+                    key={proj.id}
+                    type="button"
+                    onClick={() => {
+                      setPickedId(proj.id);
+                      setWantsNew(false);
+                      setName(proj.name);
+                      setHours(String(Math.round(proj.avgMinutes / 60)));
+                    }}
+                    aria-pressed={on}
+                    className={`flex items-center gap-3 rounded border px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                      on ? "border-accent bg-muted" : "border-primary hover:bg-primary-hover"
+                    }`}
+                  >
+                    <span className="size-2.5 shrink-0 rounded-full bg-data" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-p1 font-medium text-primary">{proj.name}</span>
+                      <span className="block truncate text-p2 text-secondary">{proj.client}</span>
+                    </span>
+                    <span className="shrink-0 text-right">
+                      <span className="block text-p2 font-medium text-primary tabular-nums">
+                        {Math.round(proj.avgMinutes / 60)}h / week
+                      </span>
+                      <span className="block text-h6 font-semibold tracking-wide text-secondary">
+                        OVER {proj.weeks} WEEKS
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setPickedId(null);
+                  setWantsNew(true);
+                  setName("");
+                  setHours("");
+                }}
+                aria-pressed={wantsNew}
+                className={`rounded border border-dashed px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                  wantsNew ? "border-accent bg-muted" : "border-primary hover:bg-primary-hover"
+                }`}
+              >
+                <span className="block text-p1 font-medium text-primary">Something new</span>
+                <span className="block text-p2 text-secondary">A project that is not in your history yet</span>
+              </button>
+
+              {wantsNew && (
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  autoFocus
+                  placeholder="Client or piece of work"
+                  className="rounded border border-primary bg-primary px-3 py-2 text-p1 text-primary outline-none placeholder:text-secondary focus-visible:ring-2 focus-visible:ring-bg-accent"
+                />
+              )}
+            </div>
+          </Step>
+        )}
+
+        {step === 4 && !imported && (
           <Step
             title="Create your first project"
             sub="Projects keep your work and time logs organized."
@@ -195,13 +276,13 @@ export function Onboarding({
         {step === 5 && (
           <Step
             title={
-              imported
-                ? `${suggested} hours a week for ${name}?`
+              picked
+                ? `${suggested} hours a week for ${picked.name}?`
                 : `How long do you think ${name} will take?`
             }
             sub={
-              imported
-                ? `Work like this took about ${suggested} hours a week across your ${IMPORT_SUGGESTION.basis}. Adjust it if this one is different.`
+              picked
+                ? `That is what ${picked.name} actually averaged over ${picked.weeks} weeks in Toggl Track. Adjust it if this week is different.`
                 : "A rough guess is enough. It gives your first week something to measure against — you can change it any time."
             }
             onBack={back}
@@ -255,9 +336,9 @@ export function Onboarding({
       {step === 5 && (
         <p className="mt-4 max-w-125 text-p2 text-secondary">
           This step is the change. Everything above it is Toggl's onboarding as it ships today —
-          {imported
-            ? " and with a history imported, the number is suggested rather than asked."
-            : " with nothing imported, a guess is the only baseline that can exist."}
+          {picked
+            ? ` and because ${picked.name} has ${picked.weeks} weeks behind it, the number is measured rather than guessed.`
+            : " with no history behind this project, a guess is the only baseline that can exist."}
         </p>
       )}
     </div>

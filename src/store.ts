@@ -36,10 +36,24 @@ export interface AppState {
 const SEED_TASKS: Task[] = [];
 
 /**
- * What an imported Track history can tell you that a cold start cannot: how
- * long work like this actually took last time. Same field, different source.
+ * What comes across from Toggl Track. A returning user already has projects,
+ * so the first step is picking one — and each carries the thing a cold start
+ * cannot have: how long this exact work actually took last time.
  */
-export const IMPORT_SUGGESTION = { minutes: 14 * 60, basis: "8 weeks of Toggl Track history" };
+export interface ImportedProject {
+  id: string;
+  name: string;
+  client: string;
+  /** average minutes per week, measured over `weeks` */
+  avgMinutes: number;
+  weeks: number;
+}
+
+export const IMPORTED_PROJECTS: ImportedProject[] = [
+  { id: "p1", name: "Acme rebrand", client: "Acme Corp", avgMinutes: 14 * 60, weeks: 8 },
+  { id: "p2", name: "Northwind identity", client: "Northwind", avgMinutes: 9 * 60 + 30, weeks: 5 },
+  { id: "p3", name: "Contra newsletter", client: "Contra", avgMinutes: 3 * 60, weeks: 12 },
+];
 
 export function useApp() {
   const [s, setS] = useState<AppState>({
