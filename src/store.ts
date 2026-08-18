@@ -110,6 +110,17 @@ export function useApp() {
     });
   }, []);
 
+  /** Drop a block straight onto the calendar — the plan-and-track gesture. */
+  const addEntry = useCallback((dayIndex: number, start: number, end: number, label: string) => {
+    setS((p) => {
+      const seg: Segment = { id: `cal-${Date.now()}`, start, end, label: label || "Untitled", kind: "tracked" };
+      return {
+        ...p,
+        week: p.week.map((d, i) => (i === dayIndex ? { ...d, segments: [...d.segments, seg] } : d)),
+      };
+    });
+  }, []);
+
   const claim = useCallback((id: string) => {
     setS((p) => ({ ...p, claimed: new Set(p.claimed).add(id) }));
   }, []);
@@ -136,10 +147,10 @@ export function useApp() {
 
   return useMemo(
     () => ({
-      s, view, setView, finishOnboarding, startTimer, stopTimer,
+      s, view, setView, finishOnboarding, startTimer, stopTimer, addEntry,
       claim, claimMany, setToday, setEstimate, toggleTask, addTask,
     }),
-    [s, view, finishOnboarding, startTimer, stopTimer, claim, claimMany, setToday, setEstimate, toggleTask, addTask],
+    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, claim, claimMany, setToday, setEstimate, toggleTask, addTask],
   );
 }
 
