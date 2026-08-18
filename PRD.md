@@ -243,9 +243,56 @@ proposed. The instrumentation is the deliverable, not a forecast.
 - In week two, when history does exist, does the declared number stay the
   reference or does the product start proposing one?
 
+
 ---
 
-## 9. Implementation notes
+## 9. The next step I would take
+
+**Scope note, stated plainly:** this was built against an assumed short window,
+and the scope was cut to fit it. What follows is out of *this* build, not out
+of the product.
+
+**Sync the client's own tools through MCP — Notion, Asana, Linear, Jira.**
+
+This matters most for the persona the brief names second and the market serves
+worst: the **independent contractor embedded in a client organisation**. Their
+work does not originate in Toggl. It originates in the client's Linear board,
+the client's Notion database, the client's Asana project — and they are the
+people least likely to retype it, because the structure already exists and
+already belongs to someone else.
+
+Connecting those accounts would let a contractor's real projects and tasks
+arrive in Toggl without them building a shadow copy by hand.
+
+### Why this does not contradict rejecting bulk import
+
+It looks like the same idea, and it is not. The reason bulk import was rejected
+in §4 is **cost paid before value**: manually entering every client and project
+is a wall of setup a new user hits before receiving anything.
+
+An MCP connection changes the price, not just the mechanism:
+
+| | Bulk import | MCP sync |
+|---|---|---|
+| What the user does | Types every project and client | Authorises one account |
+| When the cost lands | Entirely up front | One click, once |
+| What arrives | A snapshot they maintain by hand | Structure that stays current |
+
+One authorisation is not a setup wall. And crucially it keeps the W0 rule
+intact: **the product still earns the right to ask.** The connector belongs
+where the user has already felt the friction of typing a task that exists
+somewhere else — not as a fifth screen before they have seen anything work.
+
+### What it would unlock
+
+The same argument that runs through this document. A declared pace substitutes
+for missing history; an imported task graph substitutes for missing structure.
+Both exist because a week-one user has nothing accumulated, and both refuse to
+make the user manufacture it by hand.
+
+---
+
+## 10. Implementation notes
 
 Two nullable fields on project: `kind` and `plannedHoursPerWeek`. Every
 downstream surface degrades to today's behaviour when they are null, because

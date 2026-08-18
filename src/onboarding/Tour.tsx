@@ -1,12 +1,17 @@
 import { useEffect, useLayoutEffect, useState } from "react";
 import type { App, View } from "../store";
 import { CheckIcon } from "../week/Icons";
+import { WEEK } from "../week/data";
 
 /**
  * The walkthrough Toggl ships after onboarding, made hands-on. Every stop
- * performs the real action against the real store, and the spotlight keeps the
- * affected element visible so the user watches their own change land. A tour
- * you can only read teaches where buttons are; this one teaches what they do.
+ * performs the real action against the real store, through the product's own
+ * affordance, and the spotlight keeps the affected element visible so the user
+ * watches their own change land.
+ *
+ * The timer is deliberately absent. Starting a clock assumes the user is
+ * working right now, which a person setting up rarely is — and this feature
+ * does not improve capture, so capture cannot be the toll to get in.
  */
 type Ctx = { project: string; imported: boolean };
 
@@ -17,66 +22,63 @@ interface Stop {
   title: string;
   body: (c: Ctx) => string;
   place?: "below" | "right";
-  /** the label on the control that performs this stop's action */
   cta: string;
-  /** the equal-weight alternative when the action assumes something untrue */
-  decline?: string;
-  /** placeholder when the action needs typing; omit for a one-tap action */
   placeholder?: string;
   prefill?: (c: Ctx) => string;
-  run: (app: App, value: string) => void;
-  done: (app: App) => boolean;
-  confirm: (value: string) => string;
+  /** day + hour pickers, for the stop that puts something on the calendar */
+  schedule?: boolean;
+  run: (app: App, v: { text: string; day: number; hour: number }) => void;
+  confirm: (v: { text: string; day: number; hour: number }) => string;
 }
+
+const HOURS = [9, 10, 11, 12, 14, 15, 16, 17];
+const hhmm = (h: number) => `${h}:00`;
 
 const STOPS: Stop[] = [
   {
     id: "timer",
     target: "[data-tour='timer']",
     view: "timer",
-    title: "Working on it right now?",
+    title: "Name what you want to measure",
     body: () =>
-      "If you are, name it and the timer runs. If you're not, that's the normal case — you can log it afterwards, and the next step shows you how.",
+      "This sits in the timer bar, ready. Press play whenever you actually start — nothing runs until you do.",
     place: "below",
-    cta: "Start the timer",
-    decline: "Not right now",
-    placeholder: "What are you working on?",
+    cta: "Save it",
+    placeholder: "What do you want to measure?",
     prefill: ({ project }) => `${project} — first pass`,
-    run: (app, v) => app.startTimer(v.trim() || "Untitled"),
-    done: (app) => Boolean(app.s.runningSince),
-    confirm: (v) => `Tracking “${v}”. The clock is running above.`,
+    run: (app, v) => app.setDraftLabel(v.text.trim()),
+    confirm: (v) => `“${v.text}” is waiting in the timer bar. Press play when you start.`,
   },
   {
     id: "calendar",
     target: "[data-tour='calendar']",
     view: "timer",
-    title: "Most time gets logged after the fact",
+    title: "Put work on a day",
     body: () =>
-      "Almost nobody tracks live all week. Drop a block on any day — the open band is your working hours, the shaded ones are not.",
+      "Most time gets logged after the fact. Pick the day and hour and it lands on the calendar — the open band is your working hours.",
     place: "below",
-    cta: "Log an hour on Monday",
+    cta: "Add it to the calendar",
     placeholder: "What did you do?",
     prefill: () => "Kickoff notes",
-    run: (app, v) => app.addEntry(0, 13 * 60, 14 * 60, v.trim() || "Untitled"),
-    done: (app) => app.s.week[0].segments.some((sg) => sg.id.startsWith("cal-")),
-    confirm: (v) => `“${v}” is on Monday at 13:00.`,
+    schedule: true,
+    run: (app, v) => app.addEntry(v.day, v.hour * 60, v.hour * 60 + 60, v.text.trim() || "Untitled"),
+    confirm: (v) => `“${v.text}” is on ${WEEK[v.day].weekday} at ${hhmm(v.hour)}.`,
   },
   {
     id: "tasks",
-    target: "[data-tour-nav='tasks']",
+    target: "[data-tour='add-task']",
     view: "tasks",
     title: "Break the project into tasks",
     body: ({ project, imported }) =>
       imported
-        ? `Your imported projects came across with none. Add the pieces of ${project} you actually bill for.`
-        : `Add the pieces of ${project} you actually bill for — each can carry its own estimate.`,
-    place: "right",
+        ? `Your imported projects came across with none. Add task, up here, is where the pieces of ${project} go.`
+        : `Add task, up here, is where you break ${project} into the pieces you actually bill for.`,
+    place: "below",
     cta: "Add this task",
     placeholder: "Add a task",
     prefill: () => "Wordmark exploration",
-    run: (app, v) => app.addTask(v.trim() || "Untitled task"),
-    done: (app) => app.s.tasks.length > 0,
-    confirm: (v) => `“${v}” is in your task list.`,
+    run: (app, v) => app.addTask(v.text.trim() || "Untitled task"),
+    confirm: (v) => `“${v.text}” is in ${"your task list"}.`,
   },
   {
     id: "week",
@@ -88,7 +90,6 @@ const STOPS: Stop[] = [
     place: "right",
     cta: "Finish",
     run: (app) => app.endTour(),
-    done: () => false,
     confirm: () => "",
   },
 ];
@@ -97,7 +98,9 @@ export function Tour({ app }: { app: App }) {
   const { s } = app;
   const [i, setI] = useState(0);
   const [box, setBox] = useState<DOMRect | null>(null);
-  const [value, setValue] = useState("");
+  const [text, setText] = useState("");
+  const [day, setDay] = useState(0);
+  const [hour, setHour] = useState(11);
   const [justDid, setJustDid] = useState<string | null>(null);
   const stop = STOPS[i];
   const ctx: Ctx = { project: s.projectName, imported: s.origin === "imported" };
@@ -106,9 +109,8 @@ export function Tour({ app }: { app: App }) {
     if (stop && app.view !== stop.view) app.setView(stop.view);
   }, [stop, app]);
 
-  // reset the field for each stop, prefilled with something usable
   useEffect(() => {
-    setValue(stop?.prefill ? stop.prefill(ctx) : "");
+    setText(stop?.prefill ? stop.prefill(ctx) : "");
     setJustDid(null);
   }, [i]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -131,17 +133,21 @@ export function Tour({ app }: { app: App }) {
   const advance = () => (last ? app.endTour() : setI(i + 1));
 
   const perform = () => {
-    if (stop.done(app) && !justDid) return advance();
-    stop.run(app, value);
+    const v = { text, day, hour };
+    stop.run(app, v);
     if (last) return;
-    setJustDid(stop.confirm(value));
+    setJustDid(stop.confirm(v));
   };
 
   const pad = 6;
+  const tipH = stop.schedule ? 400 : 300;
   const tip: React.CSSProperties = box
     ? stop.place === "right"
-      ? { top: Math.max(12, Math.min(box.top - 8, innerHeight - 300)), left: box.right + 14 }
-      : { top: Math.min(box.bottom + 12, innerHeight - 280), left: Math.max(12, box.left) }
+      ? { top: Math.max(12, Math.min(box.top - 8, innerHeight - tipH)), left: box.right + 14 }
+      : {
+          top: Math.min(box.bottom + 12, Math.max(12, innerHeight - tipH)),
+          left: Math.min(Math.max(12, box.left), innerWidth - 372),
+        }
     : { top: "50%", left: "50%", transform: "translate(-50%,-50%)" };
 
   return (
@@ -172,14 +178,51 @@ export function Tour({ app }: { app: App }) {
 
         {stop.placeholder && !justDid && (
           <input
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
+            value={text}
+            onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && perform()}
             placeholder={stop.placeholder}
             aria-label={stop.placeholder}
             autoFocus
             className="mt-3 w-full rounded border border-primary bg-primary px-2.5 py-1.5 text-p2 text-primary outline-none placeholder:text-secondary focus-visible:ring-2 focus-visible:ring-bg-accent"
           />
+        )}
+
+        {stop.schedule && !justDid && (
+          <div className="mt-3 flex flex-col gap-2">
+            <span className="text-h6 font-semibold tracking-wide text-secondary">DAY</span>
+            <div className="flex gap-1">
+              {WEEK.slice(0, 5).map((d, n) => (
+                <button
+                  key={d.weekday}
+                  type="button"
+                  onClick={() => setDay(n)}
+                  aria-pressed={day === n}
+                  className={`flex-1 rounded px-1.5 py-1 text-p2 font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                    day === n ? "bg-accent text-inverted" : "bg-secondary text-secondary hover:bg-secondary-hover"
+                  }`}
+                >
+                  {d.weekday}
+                </button>
+              ))}
+            </div>
+            <span className="text-h6 font-semibold tracking-wide text-secondary">START</span>
+            <div className="flex flex-wrap gap-1">
+              {HOURS.map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => setHour(h)}
+                  aria-pressed={hour === h}
+                  className={`rounded px-2 py-1 text-p2 font-medium tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                    hour === h ? "bg-accent text-inverted" : "bg-secondary text-secondary hover:bg-secondary-hover"
+                  }`}
+                >
+                  {hhmm(h)}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {justDid && (
@@ -197,25 +240,10 @@ export function Tour({ app }: { app: App }) {
           >
             Skip tour
           </button>
-          {!justDid && !last && (
-            <button
-              type="button"
-              onClick={advance}
-              className={
-                stop.decline
-                  ? "ml-auto rounded border border-primary px-3 py-1.5 text-p2 font-medium text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
-                  : "rounded px-2 py-1.5 text-p2 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
-              }
-            >
-              {stop.decline ?? "Not now"}
-            </button>
-          )}
           <button
             type="button"
             onClick={justDid ? advance : perform}
-            className={`rounded bg-accent px-3 py-1.5 text-p2 font-medium text-inverted outline-none transition-colors hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-bg-accent ${
-              stop.decline && !justDid ? "" : "ml-auto"
-            }`}
+            className="ml-auto rounded bg-accent px-3 py-1.5 text-p2 font-medium text-inverted outline-none transition-colors hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
           >
             {justDid ? (last ? "Got it" : "Next") : stop.cta}
           </button>
