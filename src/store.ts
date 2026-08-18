@@ -38,6 +38,8 @@ export interface AppState {
   tasks: Task[];
   /** the post-onboarding walkthrough runs once, for both entry paths */
   tourActive: boolean;
+  /** what is typed in the timer field but not yet started */
+  draftLabel: string;
   /** epoch ms when the running timer started, null when stopped */
   runningSince: number | null;
   runningLabel: string;
@@ -119,6 +121,7 @@ export function useApp() {
     claimed: new Set(),
     tasks: SEED_TASKS,
     tourActive: false,
+    draftLabel: "",
     runningSince: null,
     runningLabel: "",
   });
@@ -141,8 +144,12 @@ export function useApp() {
     [],
   );
 
+  const setDraftLabel = useCallback((draftLabel: string) => setS((p) => ({ ...p, draftLabel })), []);
+
   const startTimer = useCallback((label: string) => {
-    setS((p) => (p.runningSince ? p : { ...p, runningSince: Date.now(), runningLabel: label }));
+    setS((p) =>
+      p.runningSince ? p : { ...p, runningSince: Date.now(), runningLabel: label, draftLabel: "" },
+    );
   }, []);
 
   /** Stops the timer and writes a real block onto today's ribbon. */
@@ -215,11 +222,11 @@ export function useApp() {
 
   return useMemo(
     () => ({
-      s, view, setView, finishOnboarding, startTimer, stopTimer, addEntry,
+      s, view, setView, finishOnboarding, startTimer, stopTimer, addEntry, setDraftLabel,
       claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs,
       endTour, startTour,
     }),
-    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs, endTour, startTour],
+    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, setDraftLabel, claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs, endTour, startTour],
   );
 }
 
