@@ -361,3 +361,19 @@
 @utility bg-error { background-color: rgb(var(--foreground-error)); }
 @utility bg-warning { background-color: rgb(var(--foreground-warning)); }
 @utility bg-success { background-color: rgb(var(--foreground-success)); }
+
+/* product brand colours — literals in Toggl's own config, not tokens */
+@utility bg-brand-focus { background-color: #ec85fe; }
+@utility text-brand-focus { color: #ec85fe; }
+@utility bg-brand-toggl { background-color: #312537; }
+@utility text-brand-toggl { color: #312537; }
+@utility bg-brand-track { background-color: #e57bd9; }
+@utility text-brand-track { color: #e57bd9; }
+@utility bg-brand-plan { background-color: #a875f5; }
+@utility text-brand-plan { color: #a875f5; }
+@utility bg-brand-work { background-color: #25b484; }
+@utility text-brand-work { color: #25b484; }
+@utility bg-brand-hire { background-color: #e97263; }
+@utility text-brand-hire { color: #e97263; }
+@utility bg-brand-suite { background-color: #ffde91; }
+@utility text-brand-suite { color: #ffde91; }

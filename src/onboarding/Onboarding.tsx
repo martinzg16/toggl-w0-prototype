@@ -40,6 +40,19 @@ export function Onboarding({
   const next = () => setStep((s) => s + 1);
   const back = () => setStep((s) => Math.max(0, s - 1));
 
+  /** Nothing here is the price of entry. Skipping lands in the app with the
+   *  defaults Toggl's own copy promises you can set later from Settings. */
+  const skipSetup = () =>
+    onDone({
+      origin: origin ?? "cold",
+      intent: intent ?? "track",
+      calendarConnected: calendar,
+      projectName: name.trim() || "My first project",
+      projectEstimate: hours.trim() ? Math.max(1, Number(hours)) * 60 : 0,
+      projectKind: kind,
+      paceSkipped: !hours.trim(),
+    });
+
   return (
     <div
       className="flex min-h-dvh flex-col items-center bg-secondary px-4 py-6"
@@ -59,6 +72,13 @@ export function Onboarding({
             <h1 className="font-display text-h2 text-primary">Welcome to Toggl 2.0</h1>
             <p className="text-p1 text-secondary">Track, plan and manage your work in one place.</p>
             <Primary onClick={next} className="mt-4 w-full">Get started</Primary>
+            <button
+              type="button"
+              onClick={skipSetup}
+              className="rounded text-p2 text-tertiary underline-offset-2 outline-none transition-colors hover:text-secondary hover:underline focus-visible:ring-2 focus-visible:ring-bg-accent"
+            >
+              Skip setup
+            </button>
           </div>
         )}
 
@@ -66,6 +86,7 @@ export function Onboarding({
           <Step
             step={step}
             total={total}
+            onSkipSetup={skipSetup}
             title="What will you mainly use Toggl for?"
             sub="We'll tailor your first experience to help you get there."
             onBack={back}
@@ -103,6 +124,7 @@ export function Onboarding({
           <Step
             step={step}
             total={total}
+            onSkipSetup={skipSetup}
             title="Bring your existing data with you"
             sub="If you have been tracking in Toggl Track, your projects and history come across and this week starts with something behind it."
             onBack={back}
@@ -154,6 +176,7 @@ export function Onboarding({
           <Step
             step={step}
             total={total}
+            onSkipSetup={skipSetup}
             title="Log time from your meetings and events"
             sub="Connect your calendar and your meetings and events are ready to track."
             onBack={back}
@@ -189,6 +212,7 @@ export function Onboarding({
           <Step
             step={step}
             total={total}
+            onSkipSetup={skipSetup}
             title="Which project are you picking up?"
             sub="These came across from Toggl Track. Start with the one you are working on this week."
             onBack={back}
@@ -264,6 +288,7 @@ export function Onboarding({
           <Step
             step={step}
             total={total}
+            onSkipSetup={skipSetup}
             title="Create your first project"
             sub="Projects keep your work and time logs organized."
             onBack={back}
@@ -287,6 +312,7 @@ export function Onboarding({
           <Step
             step={step}
             total={total}
+            onSkipSetup={skipSetup}
             title={picked ? `How much of your week is ${picked.name}?` : `How much of your week is ${name}?`}
             sub={
               picked
@@ -375,7 +401,7 @@ export function Onboarding({
               </span>
             </label>
 
-            <Payoff kind={kind} hours={Number(hours) || 0} name={name || "this project"} />
+            <Payoff kind={kind} hours={Number(hours) || 0} name={name.trim() || "your first project"} />
           </Step>
         )}
       </div>
@@ -394,10 +420,11 @@ export function Onboarding({
 }
 
 function Step({
-  title, sub, children, onBack, onNext, onSkip, nextLabel = "Continue", nextDisabled, step, total,
+  title, sub, children, onBack, onNext, onSkip, onSkipSetup,
+  nextLabel = "Continue", nextDisabled, step, total,
 }: {
   title: string; sub: string; children: React.ReactNode;
-  onBack: () => void; onNext: () => void; onSkip?: () => void;
+  onBack: () => void; onNext: () => void; onSkip?: () => void; onSkipSetup?: () => void;
   nextLabel?: string; nextDisabled?: boolean; step: number; total: number;
 }) {
   return (
@@ -413,7 +440,7 @@ function Step({
         </div>
         {children}
       </div>
-      <div className="flex shrink-0 items-center gap-3 border-t border-primary px-8 py-4">
+      <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-primary px-8 py-4">
         <button
           type="button"
           onClick={onBack}
@@ -421,18 +448,23 @@ function Step({
         >
           Back
         </button>
-        {onSkip && (
+        <button
+          type="button"
+          onClick={onSkip ?? onNext}
+          className="ml-auto rounded px-3 py-2 text-p1 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+        >
+          Skip for now
+        </button>
+        <Primary onClick={onNext} disabled={nextDisabled}>{nextLabel}</Primary>
+        {onSkipSetup && (
           <button
             type="button"
-            onClick={onSkip}
-            className="ml-auto rounded px-3 py-2 text-p1 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+            onClick={onSkipSetup}
+            className="basis-full rounded text-left text-p2 text-tertiary underline-offset-2 outline-none transition-colors hover:text-secondary hover:underline focus-visible:ring-2 focus-visible:ring-bg-accent"
           >
-            Skip for now
+            Skip setup — you can add all of this later from Settings
           </button>
         )}
-        <Primary onClick={onNext} disabled={nextDisabled} className={onSkip ? "" : "ml-auto"}>
-          {nextLabel}
-        </Primary>
       </div>
     </div>
   );
