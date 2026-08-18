@@ -97,6 +97,10 @@ export const WEEK: Day[] = [
 export const BAND_START = h(9);
 export const BAND_END = h(18);
 
+/** The calendar grid shows more than the working band, so availability reads as a band. */
+export const GRID_START = h(8);
+export const GRID_END = h(20);
+
 export const minutesOf = (s: Segment) => s.end - s.start;
 
 export function fmt(mins: number) {
