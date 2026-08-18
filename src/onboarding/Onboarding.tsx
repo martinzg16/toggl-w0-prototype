@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { IMPORTED_PROJECTS, type Intent, type Origin } from "../store";
+import { HOUR_PRESETS, KINDS, previewTracked, readWeek, TONE_CLASS, type Kind } from "../lib/model";
 import { PROJECT } from "../week/data";
 import { CalendarIcon, CheckIcon } from "../week/Icons";
 
@@ -17,6 +18,8 @@ export function Onboarding({
     calendarConnected: boolean;
     projectName: string;
     projectEstimate: number;
+    projectKind: Kind;
+    paceSkipped: boolean;
   }) => void;
 }) {
   const [step, setStep] = useState(0);
@@ -29,6 +32,7 @@ export function Onboarding({
   const [pickedId, setPickedId] = useState<string | null>(null);
   /** explicit, so nothing is selected on arrival */
   const [wantsNew, setWantsNew] = useState(false);
+  const [kind, setKind] = useState<Kind>("fixed");
   const imported = origin === "imported";
   const picked = IMPORTED_PROJECTS.find((x) => x.id === pickedId) ?? null;
   const suggested = picked ? Math.round(picked.avgMinutes / 60) : null;
@@ -275,15 +279,11 @@ export function Onboarding({
 
         {step === 5 && (
           <Step
-            title={
-              picked
-                ? `${suggested} hours a week for ${picked.name}?`
-                : `How long do you think ${name} will take?`
-            }
+            title={picked ? `How much of your week is ${picked.name}?` : `How much of your week is ${name}?`}
             sub={
               picked
-                ? `That is what ${picked.name} actually averaged over ${picked.weeks} weeks in Toggl Track. Adjust it if this week is different.`
-                : "A rough guess is enough. It gives your first week something to measure against — you can change it any time."
+                ? `${picked.name} averaged ${suggested}h a week over ${picked.weeks} weeks in Toggl Track. Confirm it or change it.`
+                : "Set the pace you intend to keep. It is what makes your first week readable — you can change it any time."
             }
             onBack={back}
             nextDisabled={!hours.trim()}
@@ -294,41 +294,80 @@ export function Onboarding({
                 calendarConnected: calendar,
                 projectName: name.trim() || "My first project",
                 projectEstimate: Math.max(1, Number(hours) || 1) * 60,
+                projectKind: kind,
+                paceSkipped: false,
+              })
+            }
+            onSkip={() =>
+              onDone({
+                origin: origin ?? "cold",
+                intent: intent ?? "track",
+                calendarConnected: calendar,
+                projectName: name.trim() || "My first project",
+                projectEstimate: 0,
+                projectKind: kind,
+                paceSkipped: true,
               })
             }
             nextLabel="Start tracking"
           >
-            <div className="flex flex-col gap-3">
-              <label className="flex items-center gap-3">
+            {/* DOM order is question -> payoff -> actions on purpose: on a narrow
+                viewport the reason must sit above Continue, not below it. */}
+            <fieldset className="flex flex-col gap-2">
+              <legend className="pb-1.5 text-h6 font-semibold tracking-wide text-secondary">
+                WHAT KIND OF WORK IS THIS?
+              </legend>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {KINDS.map((k) => {
+                  const on = kind === k.id;
+                  return (
+                    <button
+                      key={k.id}
+                      type="button"
+                      onClick={() => setKind(k.id)}
+                      aria-pressed={on}
+                      className={`rounded border px-3 py-2.5 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                        on ? "border-accent bg-muted" : "border-primary hover:bg-primary-hover"
+                      }`}
+                    >
+                      <span className="block text-p1 font-medium text-primary">{k.label}</span>
+                      <span className="block text-p2 leading-snug text-secondary">{k.hint}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-h6 font-semibold tracking-wide text-secondary">HOURS A WEEK</span>
+              <span className="flex flex-wrap items-center gap-2">
                 <input
                   type="number"
                   min={1}
-                  max={60}
+                  max={80}
                   value={hours}
                   autoFocus
                   placeholder="—"
                   onChange={(e) => setHours(e.target.value)}
+                  aria-label="Hours a week"
                   className="w-24 rounded border border-primary bg-primary px-3 py-2 text-h3 text-primary tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-bg-accent"
                 />
-                <span className="text-p1 text-secondary">hours a week</span>
-              </label>
-              <div className="flex gap-1.5">
-                {[5, 10, 20, 40].map((h) => (
+                {HOUR_PRESETS.map((h) => (
                   <button
                     key={h}
                     type="button"
                     onClick={() => setHours(String(h))}
                     className={`rounded px-3 py-1.5 text-p2 font-medium tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
-                      hours === String(h)
-                        ? "bg-accent text-inverted"
-                        : "bg-secondary text-secondary hover:bg-secondary-hover"
+                      hours === String(h) ? "bg-accent text-inverted" : "bg-secondary text-secondary hover:bg-secondary-hover"
                     }`}
                   >
                     {h}h
                   </button>
                 ))}
-              </div>
-            </div>
+              </span>
+            </label>
+
+            <Payoff kind={kind} hours={Number(hours) || 0} name={name || "this project"} />
           </Step>
         )}
       </div>
@@ -346,10 +385,11 @@ export function Onboarding({
 }
 
 function Step({
-  title, sub, children, onBack, onNext, nextLabel = "Continue", nextDisabled,
+  title, sub, children, onBack, onNext, onSkip, nextLabel = "Continue", nextDisabled,
 }: {
   title: string; sub: string; children: React.ReactNode;
-  onBack: () => void; onNext: () => void; nextLabel?: string; nextDisabled?: boolean;
+  onBack: () => void; onNext: () => void; onSkip?: () => void;
+  nextLabel?: string; nextDisabled?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -366,8 +406,50 @@ function Step({
         >
           Back
         </button>
-        <Primary onClick={onNext} disabled={nextDisabled} className="ml-auto">{nextLabel}</Primary>
+        {onSkip && (
+          <button
+            type="button"
+            onClick={onSkip}
+            className="ml-auto rounded px-3 py-2 text-p1 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+          >
+            Skip for now
+          </button>
+        )}
+        <Primary onClick={onNext} disabled={nextDisabled} className={onSkip ? "" : "ml-auto"}>
+          {nextLabel}
+        </Primary>
       </div>
+    </div>
+  );
+}
+
+/**
+ * The payoff, on the same screen as the question. This is the entire
+ * justification for adding a step to onboarding: the field shows what it buys
+ * in situ instead of promising it later.
+ */
+function Payoff({ kind, hours, name }: { kind: Kind; hours: number; name: string }) {
+  if (!hours) {
+    return (
+      <div className="rounded border border-dashed border-primary bg-secondary px-4 py-3">
+        <p className="text-p2 text-secondary">
+          Pick a number and you will see the reading it buys you on Friday.
+        </p>
+      </div>
+    );
+  }
+  const tracked = previewTracked(kind, hours);
+  const reading = readWeek(kind, hours, tracked);
+  const tone = TONE_CLASS[reading.tone];
+
+  return (
+    <div className="flex flex-col gap-2 rounded border border-primary bg-muted px-4 py-3">
+      <p className="text-h6 font-semibold tracking-wide text-secondary">EXAMPLE · YOUR FRIDAY</p>
+      <p className="text-p2 text-secondary tabular-nums">
+        {name} · planned {hours}h · tracked {tracked}h
+      </p>
+      <p className={`text-p1 font-medium ${tone.text}`}>{reading.headline}</p>
+      <p className="text-p2 leading-snug text-secondary">{reading.detail}</p>
     </div>
   );
 }

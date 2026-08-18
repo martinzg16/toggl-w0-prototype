@@ -116,3 +116,10 @@ export const BarsIcon = (p: P) => (
     <rect x="11.1" y="3" width="2.4" height="10.5" rx=".6" />
   </svg>
 );
+
+export const AlertIcon = (p: P) => (
+  <Svg {...p}><circle cx="8" cy="8" r="6" /><path d="M8 5v3.4M8 10.8h.01" /></Svg>
+);
+export const WeekIcon = (p: P) => (
+  <Svg {...p}><rect x="2" y="3.5" width="12" height="10.5" rx="1.5" /><path d="M2 6.5h12M6 9.5h4M6 11.8h2" /></Svg>
+);

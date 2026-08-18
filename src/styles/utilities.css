@@ -356,3 +356,8 @@
 @utility outline-warning-disabled { outline-color: rgb(var(--stroke-warning-disabled)); }
 @utility ring-warning-hover { --tw-ring-color: rgb(var(--stroke-warning-hover)); }
 @utility outline-warning-hover { outline-color: rgb(var(--stroke-warning-hover)); }
+
+/* tone bars for the week verdict */
+@utility bg-error { background-color: rgb(var(--foreground-error)); }
+@utility bg-warning { background-color: rgb(var(--foreground-warning)); }
+@utility bg-success { background-color: rgb(var(--foreground-success)); }
