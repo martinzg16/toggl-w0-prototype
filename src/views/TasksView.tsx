@@ -36,7 +36,17 @@ export function TasksView({ app }: { app: App }) {
         </button>
       </form>
 
-      <ul className="flex flex-col divide-y divide-primary border-y border-primary">
+      {s.tasks.length === 0 && (
+        <div className="flex flex-col gap-1 rounded border border-primary px-5 py-6">
+          <p className="text-p1 text-primary">No tasks yet.</p>
+          <p className="max-w-[52ch] text-p2 text-secondary">
+            Break {s.projectName} into the pieces you will actually bill for. Each one can carry its own
+            estimate, so by the end of the week you learn which kind of work you underprice.
+          </p>
+        </div>
+      )}
+
+      <ul className="flex flex-col divide-y divide-primary border-y border-primary empty:hidden">
         {s.tasks.map((t) => (
           <li key={t.id} className="flex items-center gap-3 py-2.5">
             <button

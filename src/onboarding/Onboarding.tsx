@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Intent } from "../store";
+import { IMPORT_SUGGESTION, type Intent, type Origin } from "../store";
 import { CalendarIcon, CheckIcon } from "../week/Icons";
 
 /**
@@ -10,15 +10,24 @@ import { CalendarIcon, CheckIcon } from "../week/Icons";
 export function Onboarding({
   onDone,
 }: {
-  onDone: (o: { intent: Intent; calendarConnected: boolean; projectName: string; projectEstimate: number }) => void;
+  onDone: (o: {
+    origin: Origin;
+    intent: Intent;
+    calendarConnected: boolean;
+    projectName: string;
+    projectEstimate: number;
+  }) => void;
 }) {
   const [step, setStep] = useState(0);
   const [intent, setIntent] = useState<Intent | null>(null);
+  const [origin, setOrigin] = useState<Origin | null>(null);
   const [calendar, setCalendar] = useState(false);
-  const [name, setName] = useState("Acme rebrand");
-  const [hours, setHours] = useState("10");
+  const [name, setName] = useState("");
+  const [hours, setHours] = useState("");
 
-  const total = 4;
+  const imported = origin === "imported";
+  const suggested = Math.round(IMPORT_SUGGESTION.minutes / 60);
+  const total = 5;
   const next = () => setStep((s) => s + 1);
   const back = () => setStep((s) => Math.max(0, s - 1));
 
@@ -82,6 +91,55 @@ export function Onboarding({
 
         {step === 2 && (
           <Step
+            title="Bring your existing data with you"
+            sub="If you have been tracking in Toggl Track, your projects and history come across and this week starts with something behind it."
+            onBack={back}
+            onNext={next}
+            nextDisabled={!origin}
+          >
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setOrigin("imported");
+                  setHours(String(suggested));
+                }}
+                aria-pressed={origin === "imported"}
+                className={`rounded border px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                  origin === "imported" ? "border-accent bg-muted" : "border-primary hover:bg-primary-hover"
+                }`}
+              >
+                <span className="block text-p1 font-medium text-primary">Import from Toggl Track</span>
+                <span className="block text-p2 text-secondary">
+                  Projects, clients and time history come with you
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setOrigin("cold");
+                  setHours("");
+                }}
+                aria-pressed={origin === "cold"}
+                className={`rounded border px-4 py-3 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
+                  origin === "cold" ? "border-accent bg-muted" : "border-primary hover:bg-primary-hover"
+                }`}
+              >
+                <span className="block text-p1 font-medium text-primary">I'm starting fresh</span>
+                <span className="block text-p2 text-secondary">Nothing to bring across</span>
+              </button>
+            </div>
+            {origin === "imported" && (
+              <p className="flex items-center gap-2 text-p2 text-success">
+                <CheckIcon className="size-3.5 shrink-0" />
+                {IMPORT_SUGGESTION.basis} imported.
+              </p>
+            )}
+          </Step>
+        )}
+
+        {step === 3 && (
+          <Step
             title="Log time from your meetings and events"
             sub="Connect your calendar and your meetings and events are ready to track."
             onBack={back}
@@ -113,7 +171,7 @@ export function Onboarding({
           </Step>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <Step
             title="Create your first project"
             sub="Projects keep your work and time logs organized."
@@ -126,23 +184,35 @@ export function Onboarding({
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="rounded border border-primary bg-primary px-3 py-2 text-p1 text-primary outline-none focus-visible:ring-2 focus-visible:ring-bg-accent"
+                autoFocus
+                placeholder="Client or piece of work"
+                className="rounded border border-primary bg-primary px-3 py-2 text-p1 text-primary outline-none placeholder:text-secondary focus-visible:ring-2 focus-visible:ring-bg-accent"
               />
             </label>
           </Step>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <Step
-            title={`How long do you think ${name || "this"} will take?`}
-            sub="A rough guess is enough. It gives your first week something to measure against — you can change it any time."
+            title={
+              imported
+                ? `${suggested} hours a week for ${name}?`
+                : `How long do you think ${name} will take?`
+            }
+            sub={
+              imported
+                ? `Work like this took about ${suggested} hours a week across your ${IMPORT_SUGGESTION.basis}. Adjust it if this one is different.`
+                : "A rough guess is enough. It gives your first week something to measure against — you can change it any time."
+            }
             onBack={back}
+            nextDisabled={!hours.trim()}
             onNext={() =>
               onDone({
+                origin: origin ?? "cold",
                 intent: intent ?? "track",
                 calendarConnected: calendar,
                 projectName: name.trim() || "My first project",
-                projectEstimate: Math.max(1, Number(hours) || 10) * 60,
+                projectEstimate: Math.max(1, Number(hours) || 1) * 60,
               })
             }
             nextLabel="Start tracking"
@@ -154,6 +224,8 @@ export function Onboarding({
                   min={1}
                   max={60}
                   value={hours}
+                  autoFocus
+                  placeholder="—"
                   onChange={(e) => setHours(e.target.value)}
                   className="w-24 rounded border border-primary bg-primary px-3 py-2 text-h3 text-primary tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-bg-accent"
                 />
@@ -180,9 +252,12 @@ export function Onboarding({
         )}
       </div>
 
-      {step === 4 && (
+      {step === 5 && (
         <p className="mt-4 max-w-125 text-p2 text-secondary">
-          This step is the change. Everything above it is Toggl's onboarding as it ships today.
+          This step is the change. Everything above it is Toggl's onboarding as it ships today —
+          {imported
+            ? " and with a history imported, the number is suggested rather than asked."
+            : " with nothing imported, a guess is the only baseline that can exist."}
         </p>
       )}
     </div>

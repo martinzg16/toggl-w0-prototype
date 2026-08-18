@@ -34,16 +34,20 @@ export function TimelineView({ app }: { app: App }) {
                   {t.name}
                 </span>
               ))}
-              {i > s.today && planned.length === 0 && (
-                <span className="text-p2 text-secondary">Nothing planned</span>
+              {planned.length === 0 && (
+                <span className="text-p2 text-secondary">
+                  {i > s.today ? "Nothing planned" : "—"}
+                </span>
               )}
             </div>
           );
         })}
       </div>
 
-      <p className="text-p2 text-secondary">
-        Planned tasks come from Tasks. Logged totals come from the timer.
+      <p className="max-w-[60ch] text-p2 text-secondary">
+        {s.tasks.length === 0
+          ? "Add tasks and they appear here, ready to drop onto a day. Logged totals come from the timer."
+          : "Planned tasks come from Tasks. Logged totals come from the timer."}
       </p>
     </div>
   );
