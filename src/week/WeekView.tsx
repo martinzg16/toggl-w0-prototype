@@ -12,7 +12,10 @@ import { Ribbon } from "./Ribbon";
 import { ArrowIcon, CalendarIcon, CheckIcon, PlusIcon } from "./Icons";
 
 export function WeekView() {
-  const [today, setToday] = useState(0);
+  // Opens mid-week on purpose: the cold reviewer must see the whole mechanism
+  // at once — filled time, a hole, and the repair — before touching anything.
+  // The scrubber rewinds to day 1 for anyone who wants the run-up.
+  const [today, setToday] = useState(2);
   const [claimed, setClaimed] = useState<Set<string>>(new Set());
   const [focused, setFocused] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
