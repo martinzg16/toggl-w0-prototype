@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "./styles/fonts.css";
+@import "./styles/toggl-focus-tokens.css";
+@import "./styles/utilities.css";
+
+/* Toggl's scales, mapped onto Tailwind v4's theme. */
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-display: "GT Haptik", Inter, ui-sans-serif, system-ui, sans-serif;
+
+  --text-h1: 2.8125rem;
+  --text-h2: 1.5rem;
+  --text-h3: 1.25rem;
+  --text-h4: 1rem;
+  --text-h5: 0.875rem;
+  --text-h6: 0.6875rem;
+  --text-p1: 0.875rem;
+  --text-p2: 0.75rem;
+  --text-base: 0.875rem;
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+
+  --leading-base: 1.43;
+
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* bare `rounded` is 8px in Toggl, and is the workhorse */
+@utility rounded { border-radius: 8px; }
+
+@utility shadow-raised-10 { box-shadow: 0 1px 3px 0 var(--elevation-raised-10); }
+@utility shadow-raised-20 { box-shadow: 0 2px 6px 0 var(--elevation-raised-20); }
+@utility shadow-raised-50 { box-shadow: 0 4px 16px 0 var(--elevation-raised-50); }
+
+/* Toggl ships this shorthand and uses it throughout */
+@utility flex-center { justify-content: center; align-items: center; }
+
+html { color-scheme: light dark; }
+
+body {
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 20px;
+  background: rgb(var(--background-primary));
+  color: rgb(var(--foreground-primary));
+}
