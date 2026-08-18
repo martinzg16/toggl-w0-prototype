@@ -36,6 +36,8 @@ export interface AppState {
   today: number;
   claimed: Set<string>;
   tasks: Task[];
+  /** the post-onboarding walkthrough runs once, for both entry paths */
+  tourActive: boolean;
   /** epoch ms when the running timer started, null when stopped */
   runningSince: number | null;
   runningLabel: string;
@@ -116,6 +118,7 @@ export function useApp() {
     today: 2,
     claimed: new Set(),
     tasks: SEED_TASKS,
+    tourActive: false,
     runningSince: null,
     runningLabel: "",
   });
@@ -131,9 +134,9 @@ export function useApp() {
       projectKind: Kind;
       paceSkipped: boolean;
     }) => {
-      setS((p) => ({ ...p, ...o, onboarded: true }));
-      // the commitment buys a verdict, so land where the verdict lives
-      setView(o.paceSkipped ? "timer" : "week");
+      setS((p) => ({ ...p, ...o, onboarded: true, tourActive: true }));
+      // the tour opens on the timer; it moves the view itself from there
+      setView("timer");
     },
     [],
   );
@@ -195,6 +198,9 @@ export function useApp() {
     setS((p) => ({ ...p, dismissed: new Set(p.dismissed).add(id) }));
   }, []);
 
+  const endTour = useCallback(() => setS((p) => ({ ...p, tourActive: false })), []);
+  const startTour = useCallback(() => setS((p) => ({ ...p, tourActive: true })), []);
+
   const setToday = useCallback((today: number) => setS((p) => ({ ...p, today })), []);
   const setEstimate = useCallback((m: number) => setS((p) => ({ ...p, projectEstimate: m })), []);
   const toggleTask = useCallback((id: string) => {
@@ -211,8 +217,9 @@ export function useApp() {
     () => ({
       s, view, setView, finishOnboarding, startTimer, stopTimer, addEntry,
       claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs,
+      endTour, startTour,
     }),
-    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs],
+    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs, endTour, startTour],
   );
 }
 
