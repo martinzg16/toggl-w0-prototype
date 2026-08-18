@@ -19,6 +19,8 @@ interface Stop {
   place?: "below" | "right";
   /** the label on the control that performs this stop's action */
   cta: string;
+  /** the equal-weight alternative when the action assumes something untrue */
+  decline?: string;
   /** placeholder when the action needs typing; omit for a one-tap action */
   placeholder?: string;
   prefill?: (c: Ctx) => string;
@@ -32,10 +34,12 @@ const STOPS: Stop[] = [
     id: "timer",
     target: "[data-tour='timer']",
     view: "timer",
-    title: "Say what you're working on",
-    body: () => "A couple of words is enough. Name it here and the timer starts running on it.",
+    title: "Working on it right now?",
+    body: () =>
+      "If you are, name it and the timer runs. If you're not, that's the normal case — you can log it afterwards, and the next step shows you how.",
     place: "below",
     cta: "Start the timer",
+    decline: "Not right now",
     placeholder: "What are you working on?",
     prefill: ({ project }) => `${project} — first pass`,
     run: (app, v) => app.startTimer(v.trim() || "Untitled"),
@@ -46,9 +50,9 @@ const STOPS: Stop[] = [
     id: "calendar",
     target: "[data-tour='calendar']",
     view: "timer",
-    title: "Log work you already did",
+    title: "Most time gets logged after the fact",
     body: () =>
-      "Not everything gets tracked live. Drop a block on any day — the open band is your working hours, the shaded ones are not.",
+      "Almost nobody tracks live all week. Drop a block on any day — the open band is your working hours, the shaded ones are not.",
     place: "below",
     cta: "Log an hour on Monday",
     placeholder: "What did you do?",
@@ -197,15 +201,21 @@ export function Tour({ app }: { app: App }) {
             <button
               type="button"
               onClick={advance}
-              className="rounded px-2 py-1.5 text-p2 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+              className={
+                stop.decline
+                  ? "ml-auto rounded border border-primary px-3 py-1.5 text-p2 font-medium text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+                  : "rounded px-2 py-1.5 text-p2 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+              }
             >
-              Not now
+              {stop.decline ?? "Not now"}
             </button>
           )}
           <button
             type="button"
             onClick={justDid ? advance : perform}
-            className="ml-auto rounded bg-accent px-3 py-1.5 text-p2 font-medium text-inverted outline-none transition-colors hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
+            className={`rounded bg-accent px-3 py-1.5 text-p2 font-medium text-inverted outline-none transition-colors hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-bg-accent ${
+              stop.decline && !justDid ? "" : "ml-auto"
+            }`}
           >
             {justDid ? (last ? "Got it" : "Next") : stop.cta}
           </button>
