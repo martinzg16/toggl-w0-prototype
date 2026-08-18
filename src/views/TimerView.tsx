@@ -62,7 +62,7 @@ export function TimerView({ app }: { app: App }) {
       </div>
 
       {/* the grid */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1 overflow-y-auto" data-tour="calendar">
         <div className="flex" style={{ height: (SPAN / 60) * ROW_H }}>
           <div className="relative w-14 shrink-0">
             {HOURS.map((hr) => (

@@ -7,6 +7,7 @@ import { ProjectsView } from "./views/ProjectsView";
 import { TasksView } from "./views/TasksView";
 import { TimelineView } from "./views/TimelineView";
 import { WeekVerdict } from "./views/WeekVerdict";
+import { Tour } from "./onboarding/Tour";
 import { PROJECT, fmt } from "./week/data";
 import {
   ApprovalIcon, AtIcon, BellIcon, BoardIcon, CalendarIcon, ChevronDown, ChevronLeft,
@@ -61,6 +62,7 @@ export default function App() {
           </div>
         )}
       </main>
+      {app.s.tourActive && <Tour app={app} />}
     </div>
   );
 }
@@ -141,6 +143,7 @@ function Sidebar({ app }: { app: ReturnType<typeof useApp> }) {
                   onClick={() => item.view && app.setView(item.view)}
                   aria-current={active ? "page" : undefined}
                   aria-disabled={!reachable}
+                  data-tour-nav={item.view}
                   className={`group flex items-center gap-2.5 rounded px-2 py-1.5 text-left text-p1 outline-none transition-colors focus-visible:ring-2 focus-visible:ring-bg-accent ${
                     active
                       ? "bg-muted font-medium text-accent"
@@ -217,6 +220,7 @@ function TimerBar({ app }: { app: ReturnType<typeof useApp> }) {
         readOnly={running}
         placeholder="What are you working on?"
         aria-label="What are you working on?"
+        data-tour="timer"
         className="min-w-0 flex-1 bg-transparent text-h3 text-primary outline-none placeholder:text-secondary"
       />
       <span className="hidden items-center gap-2 lg:flex">
