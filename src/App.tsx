@@ -27,6 +27,7 @@ export default function App() {
       <IconRail />
       <Sidebar />
       <main className="flex min-w-0 flex-1 flex-col overflow-hidden bg-primary">
+        <TimerBar />
         <Header />
         <WeekView />
       </main>
@@ -91,17 +92,37 @@ function Sidebar() {
   );
 }
 
-function Header() {
+/** Toggl's most recognizable element. Stopped, non-interactive: this
+ *  prototype is about the week, not the timer, but the week lives under it. */
+function TimerBar() {
   return (
-    <header className="flex h-16 shrink-0 items-center gap-3 border-b border-primary px-4 sm:px-8">
-      <span className="flex size-6 shrink-0 flex-center rounded-full bg-brand-focus text-brand-toggl md:hidden" aria-hidden>
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-          <path d="M8 2.5v5" />
-          <path d="M12.2 4.2a6 6 0 1 1-8.4 0" />
+    <div className="flex h-16 shrink-0 items-center gap-3 border-b border-primary px-4 sm:px-8">
+      <span className="min-w-0 flex-1 truncate text-h3 text-tertiary">What are you working on?</span>
+      <span className="hidden items-center gap-2 sm:flex">
+        {["Task", "Project", "Tags"].map((chip) => (
+          <span
+            key={chip}
+            className="rounded border border-primary px-2.5 py-1 text-p2 text-secondary"
+          >
+            {chip}
+          </span>
+        ))}
+      </span>
+      <span className="text-p1 font-medium text-primary tabular-nums">0:00:00</span>
+      <span className="flex size-9 shrink-0 flex-center rounded-full bg-accent text-inverted" aria-hidden>
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M5 3.5l8 4.5-8 4.5z" />
         </svg>
       </span>
-      <h2 className="text-h3 font-semibold text-primary">Reports</h2>
-      <span className="whitespace-nowrap rounded-sm bg-secondary px-1.5 py-0.5 text-h6 font-semibold tracking-wide text-secondary">
+    </div>
+  );
+}
+
+function Header() {
+  return (
+    <header className="flex h-12 shrink-0 items-center gap-3 border-b border-primary bg-secondary px-4 sm:px-8">
+      <h2 className="text-h5 font-semibold text-primary">Reports</h2>
+      <span className="whitespace-nowrap rounded-sm border border-primary bg-primary px-1.5 py-0.5 text-h6 font-semibold tracking-wide text-secondary">
         THIS WEEK
       </span>
     </header>

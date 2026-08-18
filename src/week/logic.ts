@@ -29,9 +29,22 @@ export const unclaimedSegments = (s: WeekState) =>
 
 const workingMinutes = (d: Day) => d.workEnd - d.workStart;
 
-/** Elapsed working time so far this week — the denominator for coverage. */
+/** Elapsed working time so far this week. */
 export const elapsedWorkingMinutes = (s: WeekState) =>
   upTo(s.today).reduce((t, d) => t + workingMinutes(d), 0);
+
+/**
+ * Day coverage: of the working days that have happened, how many carry any
+ * time at all. Survives settling a gap, and is reachable for a one-client
+ * user — unlike a share-of-all-hours ratio, which never can be.
+ */
+export function daysTracked(s: WeekState) {
+  const working = upTo(s.today).filter((d) => workingMinutes(d) > 0);
+  const withTime = working.filter((d) =>
+    d.segments.some((seg) => seg.kind === "tracked" || s.claimed.has(seg.id)),
+  );
+  return { tracked: withTime.length, total: working.length };
+}
 
 /** Straight-line projection of where the project lands by Sunday. */
 export function projectedMinutes(s: WeekState) {

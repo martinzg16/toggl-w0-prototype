@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { PROJECT, WEEK, fmt, minutesOf } from "./data";
 import {
-  elapsedWorkingMinutes,
+  daysTracked,
   statement,
   trackedMinutes,
   unclaimedMinutes,
@@ -25,7 +25,7 @@ export function WeekView() {
   const tracked = trackedMinutes(state);
   const missing = unclaimedMinutes(state);
   const gaps = unclaimedSegments(state);
-  const elapsed = elapsedWorkingMinutes(state);
+  const days = daysTracked(state);
   const est = PROJECT.estimateMinutes;
   const said = statement(state);
 
@@ -51,8 +51,10 @@ export function WeekView() {
             </span>
             <span className="h-3 w-px bg-secondary-active" />
             <span>
-              <span className="text-primary">{Math.round((tracked / Math.max(elapsed, 1)) * 100)}%</span> of your
-              working hours logged
+              <span className="text-primary">
+                {days.tracked} of {days.total}
+              </span>{" "}
+              working days tracked
             </span>
           </div>
         </div>
@@ -167,14 +169,14 @@ function Repair({
               onMouseLeave={() => onFocus(null)}
               onFocus={() => onFocus(seg.id)}
               onBlur={() => onFocus(null)}
-              className={`group flex w-full items-center gap-3 rounded px-2 py-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent ${
+              className={`group flex w-full items-center gap-3 rounded px-2 py-2 text-left outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent-hover ${
                 focused === seg.id ? "bg-primary-hover" : "hover:bg-primary-hover"
               }`}
             >
               <span className="w-10 shrink-0 text-p2 text-tertiary tabular-nums">{WEEK[dayIndex].weekday}</span>
               <span className="min-w-0 flex-1 truncate text-p1 text-primary">{seg.label}</span>
               <span className="shrink-0 text-p2 text-secondary tabular-nums">{fmt(minutesOf(seg))}</span>
-              <span className="flex shrink-0 items-center gap-1 rounded bg-secondary px-2 py-1 text-h6 font-semibold tracking-wide text-secondary opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+              <span className="flex shrink-0 items-center gap-1 rounded bg-secondary px-2 py-1 text-h6 font-semibold tracking-wide text-secondary transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100">
                 <PlusIcon className="size-3" />
                 LOG IT
               </span>
@@ -206,9 +208,9 @@ function Expansion({ onAdd }: { onAdd: () => void }) {
 
 function Scrubber({ today, onChange }: { today: number; onChange: (i: number) => void }) {
   return (
-    <div className="flex shrink-0 items-center gap-3 border-t border-primary bg-secondary px-4 py-3 sm:px-8">
-      <span className="hidden whitespace-nowrap text-h6 font-semibold tracking-wide text-secondary lg:inline">
-        YOUR FIRST WEEK
+    <div className="flex shrink-0 flex-col gap-2 border-t border-primary bg-secondary px-4 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-8">
+      <span className="whitespace-nowrap text-h6 font-semibold tracking-wide text-secondary">
+        STEP THROUGH WEEK ONE
       </span>
       <div className="flex flex-1 gap-1 lg:flex-none" role="group" aria-label="Step through the week">
         {WEEK.map((d, i) => (
@@ -217,7 +219,7 @@ function Scrubber({ today, onChange }: { today: number; onChange: (i: number) =>
             type="button"
             onClick={() => onChange(i)}
             aria-current={i === today}
-            className={`flex-1 rounded px-2 py-1 text-p2 lg:flex-none lg:px-2.5 font-medium tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`flex-1 rounded px-2 py-1 text-p2 lg:flex-none lg:px-2.5 font-medium tabular-nums outline-none transition-colors focus-visible:ring-2 focus-visible:ring-accent-hover ${
               i === today
                 ? "bg-accent text-inverted"
                 : i < today
@@ -229,7 +231,7 @@ function Scrubber({ today, onChange }: { today: number; onChange: (i: number) =>
           </button>
         ))}
       </div>
-      <span className="ml-auto whitespace-nowrap text-p2 text-tertiary tabular-nums">Day {today + 1} of 7</span>
+      <span className="ml-auto hidden whitespace-nowrap text-p2 text-secondary tabular-nums sm:inline">Day {today + 1} of 7</span>
     </div>
   );
 }
