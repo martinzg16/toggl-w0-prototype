@@ -42,18 +42,14 @@ export function Onboarding({
 
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-10"
+      className="flex min-h-dvh flex-col items-center bg-secondary px-4 py-6"
       style={PROJECT.colour as React.CSSProperties}
     >
-      <div className="w-full max-w-125 rounded-md border border-primary bg-primary px-8 py-10 shadow-raised-20">
-        {step > 0 && (
-          <p className="mb-6 text-h6 font-semibold tracking-wide text-secondary">
-            STEP {step} OF {total}
-          </p>
-        )}
-
+      <div className="my-auto flex w-full max-w-125 flex-col gap-3">
+      {/* capped so the actions are always reachable, however short the window */}
+      <div className="flex max-h-[calc(100dvh-5rem)] flex-col overflow-hidden rounded-md border border-primary bg-primary shadow-raised-20">
         {step === 0 && (
-          <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex flex-col items-center gap-3 overflow-y-auto px-8 py-10 text-center">
             <span className="mb-2 flex size-12 flex-center rounded-full bg-brand-focus text-brand-toggl">
               <svg width="22" height="22" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                 <path d="M8 2.5v5" />
@@ -68,6 +64,8 @@ export function Onboarding({
 
         {step === 1 && (
           <Step
+            step={step}
+            total={total}
             title="What will you mainly use Toggl for?"
             sub="We'll tailor your first experience to help you get there."
             onBack={back}
@@ -103,6 +101,8 @@ export function Onboarding({
 
         {step === 2 && (
           <Step
+            step={step}
+            total={total}
             title="Bring your existing data with you"
             sub="If you have been tracking in Toggl Track, your projects and history come across and this week starts with something behind it."
             onBack={back}
@@ -152,6 +152,8 @@ export function Onboarding({
 
         {step === 3 && (
           <Step
+            step={step}
+            total={total}
             title="Log time from your meetings and events"
             sub="Connect your calendar and your meetings and events are ready to track."
             onBack={back}
@@ -185,6 +187,8 @@ export function Onboarding({
 
         {step === 4 && imported && (
           <Step
+            step={step}
+            total={total}
             title="Which project are you picking up?"
             sub="These came across from Toggl Track. Start with the one you are working on this week."
             onBack={back}
@@ -258,6 +262,8 @@ export function Onboarding({
 
         {step === 4 && !imported && (
           <Step
+            step={step}
+            total={total}
             title="Create your first project"
             sub="Projects keep your work and time logs organized."
             onBack={back}
@@ -279,6 +285,8 @@ export function Onboarding({
 
         {step === 5 && (
           <Step
+            step={step}
+            total={total}
             title={picked ? `How much of your week is ${picked.name}?` : `How much of your week is ${name}?`}
             sub={
               picked
@@ -373,32 +381,39 @@ export function Onboarding({
       </div>
 
       {step === 5 && (
-        <p className="mt-4 max-w-125 text-p2 text-secondary">
+        <p className="text-p2 text-secondary">
           This step is the change. Everything above it is Toggl's onboarding as it ships today —
           {picked
             ? ` and because ${picked.name} has ${picked.weeks} weeks behind it, the number is measured rather than guessed.`
             : " with no history behind this project, a guess is the only baseline that can exist."}
         </p>
       )}
+      </div>
     </div>
   );
 }
 
 function Step({
-  title, sub, children, onBack, onNext, onSkip, nextLabel = "Continue", nextDisabled,
+  title, sub, children, onBack, onNext, onSkip, nextLabel = "Continue", nextDisabled, step, total,
 }: {
   title: string; sub: string; children: React.ReactNode;
   onBack: () => void; onNext: () => void; onSkip?: () => void;
-  nextLabel?: string; nextDisabled?: boolean;
+  nextLabel?: string; nextDisabled?: boolean; step: number; total: number;
 }) {
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-1.5">
-        <h1 className="text-balance font-display text-h3 leading-tight text-primary">{title}</h1>
-        <p className="text-p1 text-secondary">{sub}</p>
+    <div className="flex min-h-0 flex-col">
+      {/* only this scrolls; the actions below never leave the viewport */}
+      <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-8 pt-8 pb-5">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-h6 font-semibold tracking-wide text-secondary">
+            STEP {step} OF {total}
+          </p>
+          <h1 className="text-balance font-display text-h3 leading-tight text-primary">{title}</h1>
+          <p className="text-p1 text-secondary">{sub}</p>
+        </div>
+        {children}
       </div>
-      {children}
-      <div className="mt-2 flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3 border-t border-primary px-8 py-4">
         <button
           type="button"
           onClick={onBack}

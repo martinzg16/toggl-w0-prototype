@@ -148,6 +148,13 @@ The inversion in (1)→(2) is the thesis rendered as a sentence. The total is
 almost always unremarkable, and reading the total is exactly how a freelancer
 concludes a bad week was fine.
 
+**A guided tour** runs once after onboarding, for both entry paths. Four stops
+spotlight real elements and move the app to the view each is about: the timer
+field, the week calendar, Tasks, and This week. Its copy adapts — an importing
+user is told their projects came across with no tasks; a cold user is told what
+to break the project into. It exists because the commitment step buys a verdict
+the user has to be able to find.
+
 **The calibration loop** is the retention mechanic. Every flagged project
 offers two real actions: **Make it {tracked}h a week** rewrites the plan and
 the week's arithmetic recomputes live; **Keep {planned}h** closes the question
@@ -175,8 +182,8 @@ against which captured time means something.
 
 ## 5. Scope
 
-**In:** the commitment step; the This week verdict; the calibration loop; the
-two entry paths (import a Toggl Track history, or start cold); per-project
+**In:** the commitment step; the guided tour; the This week verdict; the
+calibration loop; the two entry paths (import a Toggl Track history, or start cold); per-project
 `kind` and `plannedHoursPerWeek`, editable after onboarding.
 
 **Out:** bulk import, connectors, invoicing, client sharing, profitability,
@@ -255,9 +262,9 @@ copy.
 
 ### What is real and what is synthetic
 
-**Real:** the whole onboarding flow, both entry paths, the live timer, the week
-calendar with click-to-log, task creation, the repair of unlogged calendar
-events, and the calibration loop. Your own project's tracked hours come from
+**Real:** the whole onboarding flow, both entry paths, the guided tour, the
+live timer, the week calendar with click-to-log, task creation, the repair of
+unlogged calendar events, and the calibration loop. Your own project's tracked hours come from
 what you actually log in the prototype.
 
 **Synthetic, and labelled in the UI:** the two companion projects on This week,
