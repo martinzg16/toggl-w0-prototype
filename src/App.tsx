@@ -6,12 +6,13 @@ import { TimerView } from "./views/TimerView";
 import { ProjectsView } from "./views/ProjectsView";
 import { TasksView } from "./views/TasksView";
 import { TimelineView } from "./views/TimelineView";
+import { WeekVerdict } from "./views/WeekVerdict";
 import { PROJECT, fmt } from "./week/data";
 import {
   ApprovalIcon, AtIcon, BellIcon, BoardIcon, CalendarIcon, ChevronDown, ChevronLeft,
   ChevronRight, ClockIcon, CollapseIcon, DollarIcon, GridIcon, ListIcon as ListViewIcon,
   DownloadIcon, FolderIcon, GearIcon, HashIcon, HelpIcon, ListIcon, PalmIcon,
-  PersonIcon, PlusIcon, ReportIcon, SendIcon, StarIcon, TimelineIcon, UpgradeIcon,
+  PersonIcon, PlusIcon, ReportIcon, SendIcon, StarIcon, TimelineIcon, UpgradeIcon, WeekIcon,
 } from "./week/Icons";
 
 /**
@@ -52,6 +53,7 @@ export default function App() {
           <WeekView app={app} />
         ) : (
           <div className="min-h-0 flex-1 overflow-y-auto">
+            {app.view === "week" && <WeekVerdict app={app} />}
             {app.view === "timer" && <TimerView app={app} />}
             {app.view === "projects" && <ProjectsView app={app} />}
             {app.view === "tasks" && <TasksView app={app} />}
@@ -89,7 +91,13 @@ function IconRail() {
 type NavItem = { label: string; view?: View; icon: React.ReactNode; starred?: boolean };
 const NAV: { section: string; items: NavItem[] }[] = [
   { section: "TRACK", items: [{ label: "Timer", view: "timer", icon: <ClockIcon /> }] },
-  { section: "ANALYZE", items: [{ label: "Reports", view: "reports", icon: <ReportIcon /> }] },
+  {
+    section: "ANALYZE",
+    items: [
+      { label: "This week", view: "week", icon: <WeekIcon /> },
+      { label: "Reports", view: "reports", icon: <ReportIcon /> },
+    ],
+  },
   {
     section: "PLAN",
     items: [

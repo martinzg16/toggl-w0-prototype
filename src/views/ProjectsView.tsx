@@ -1,6 +1,7 @@
 import { fmt, minutesOf } from "../week/data";
 import type { App } from "../store";
 import { ArrowIcon } from "../week/Icons";
+import { KINDS } from "../lib/model";
 
 /** The estimate captured in onboarding, and what the week has done to it. */
 export function ProjectsView({ app }: { app: App }) {
@@ -38,9 +39,26 @@ export function ProjectsView({ app }: { app: App }) {
           />
         </div>
 
+        <div className="flex flex-col gap-1.5">
+          <span className="text-h6 font-semibold tracking-wide text-secondary">KIND OF WORK</span>
+          <span className="flex flex-wrap gap-1.5">
+            {KINDS.map((k) => (
+              <span
+                key={k.id}
+                aria-current={s.projectKind === k.id ? "true" : undefined}
+                className={`rounded px-2.5 py-1 text-p2 font-medium ${
+                  s.projectKind === k.id ? "bg-muted text-accent" : "bg-secondary text-secondary"
+                }`}
+              >
+                {k.label}
+              </span>
+            ))}
+          </span>
+        </div>
+
         <label className="flex flex-col gap-1.5">
           <span className="text-h6 font-semibold tracking-wide text-secondary">
-            WEEKLY ESTIMATE — SET WHEN YOU CREATED THIS PROJECT
+            WEEKLY PACE — SET WHEN YOU CREATED THIS PROJECT
           </span>
           <span className="flex items-center gap-2">
             <input
@@ -56,17 +74,17 @@ export function ProjectsView({ app }: { app: App }) {
 
         {over && (
           <p className="text-p2 text-warning">
-            Already {fmt(tracked - est)} over. Reports will suggest a calibrated figure at the end of the week.
+            Already {fmt(tracked - est)} over. This week will offer a calibrated figure on Friday.
           </p>
         )}
       </article>
 
       <button
         type="button"
-        onClick={() => app.setView("reports")}
+        onClick={() => app.setView("week")}
         className="flex items-center gap-1.5 self-start rounded px-2 py-1.5 text-p1 font-medium text-accent outline-none transition-colors hover:bg-primary-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
       >
-        See the week <ArrowIcon className="size-3.5" />
+        See this week <ArrowIcon className="size-3.5" />
       </button>
     </div>
   );

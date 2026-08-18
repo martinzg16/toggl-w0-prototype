@@ -1,7 +1,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { BAND_END, BAND_START, WEEK as SEED, type Day, type Segment } from "./week/data";
+import type { Kind, WeekProject } from "./lib/model";
 
-export type View = "timer" | "reports" | "projects" | "tasks" | "timeline";
+export type View = "week" | "timer" | "reports" | "projects" | "tasks" | "timeline";
 export type Intent = "track" | "plan" | "projects";
 /** How the user arrived: with a Toggl Track history, or with nothing at all. */
 export type Origin = "imported" | "cold";
@@ -23,6 +24,14 @@ export interface AppState {
   projectName: string;
   /** THE intervention: captured at project creation, in minutes */
   projectEstimate: number;
+  /** what kind of contract this is — the same number reads differently per kind */
+  projectKind: Kind;
+  /** true when the user skipped the commitment step; nothing is punished for it */
+  paceSkipped: boolean;
+  /** ids the user chose to keep as-is; a closed question must not be re-raised */
+  dismissed: Set<string>;
+  /** ids the user recalibrated, mapped to the new weekly plan in hours */
+  recalibrated: Record<string, number>;
   week: Day[];
   today: number;
   claimed: Set<string>;
@@ -34,6 +43,42 @@ export interface AppState {
 
 /** Nothing is seeded. A cold-start user types their own. */
 const SEED_TASKS: Task[] = [];
+
+/**
+ * Two projects the user also declared a pace for. Fixtures, and labelled as
+ * such in the UI — one project cannot show that the same number reads
+ * differently per contract, which is the whole argument.
+ */
+export const COMPANIONS: WeekProject[] = [
+  {
+    id: "c1",
+    name: "Contra newsletter",
+    client: "Contra",
+    kind: "retainer",
+    planned: 4,
+    tracked: 2.5,
+    colour: {
+      "--foreground-data-light": "20 90 138", "--foreground-data-dark": "191 219 238",
+      "--background-data-light": "26 116 183", "--background-data-dark": "124 178 228",
+      "--background-data-muted-light": "227 240 252", "--background-data-muted-dark": "11 55 80",
+      "--stroke-data-light": "36 140 224", "--stroke-data-dark": "124 178 228",
+    },
+  },
+  {
+    id: "c2",
+    name: "Portfolio refresh",
+    client: "Personal",
+    kind: "personal",
+    planned: 3,
+    tracked: 1.5,
+    colour: {
+      "--foreground-data-light": "20 110 70", "--foreground-data-dark": "180 226 200",
+      "--background-data-light": "26 140 88", "--background-data-dark": "120 200 160",
+      "--background-data-muted-light": "225 245 234", "--background-data-muted-dark": "12 60 38",
+      "--stroke-data-light": "34 168 106", "--stroke-data-dark": "120 200 160",
+    },
+  },
+];
 
 /**
  * What comes across from Toggl Track. A returning user already has projects,
@@ -63,6 +108,10 @@ export function useApp() {
     calendarConnected: false,
     projectName: "",
     projectEstimate: 0,
+    projectKind: "fixed",
+    paceSkipped: false,
+    dismissed: new Set(),
+    recalibrated: {},
     week: SEED,
     today: 2,
     claimed: new Set(),
@@ -79,9 +128,12 @@ export function useApp() {
       calendarConnected: boolean;
       projectName: string;
       projectEstimate: number;
+      projectKind: Kind;
+      paceSkipped: boolean;
     }) => {
       setS((p) => ({ ...p, ...o, onboarded: true }));
-      setView(o.intent === "track" ? "reports" : o.intent === "plan" ? "tasks" : "projects");
+      // the commitment buys a verdict, so land where the verdict lives
+      setView(o.paceSkipped ? "timer" : "week");
     },
     [],
   );
@@ -133,6 +185,16 @@ export function useApp() {
     });
   }, []);
 
+  /** Rewrites the plan. The row settles and the week's arithmetic moves with it. */
+  const recalibrate = useCallback((id: string, hours: number) => {
+    setS((p) => ({ ...p, recalibrated: { ...p.recalibrated, [id]: hours } }));
+  }, []);
+
+  /** The user looked and decided. Closed question — drop it from the headline. */
+  const keepAsIs = useCallback((id: string) => {
+    setS((p) => ({ ...p, dismissed: new Set(p.dismissed).add(id) }));
+  }, []);
+
   const setToday = useCallback((today: number) => setS((p) => ({ ...p, today })), []);
   const setEstimate = useCallback((m: number) => setS((p) => ({ ...p, projectEstimate: m })), []);
   const toggleTask = useCallback((id: string) => {
@@ -148,9 +210,9 @@ export function useApp() {
   return useMemo(
     () => ({
       s, view, setView, finishOnboarding, startTimer, stopTimer, addEntry,
-      claim, claimMany, setToday, setEstimate, toggleTask, addTask,
+      claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs,
     }),
-    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, claim, claimMany, setToday, setEstimate, toggleTask, addTask],
+    [s, view, finishOnboarding, startTimer, stopTimer, addEntry, claim, claimMany, setToday, setEstimate, toggleTask, addTask, recalibrate, keepAsIs],
   );
 }
 
