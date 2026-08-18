@@ -39,6 +39,7 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
           const isPast = i <= state.today;
           const isToday = i === state.today;
           const offDay = day.workEnd === day.workStart;
+          const firstOffDay = offDay && WEEK[i - 1]?.workEnd !== WEEK[i - 1]?.workStart;
           const workLeft = pct(day.workStart);
           const workRight = pct(day.workEnd);
 
@@ -59,9 +60,12 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
 
               <div className="relative flex-1 py-1">
                 {offDay ? (
-                  <span className="flex h-full items-center text-h6 font-semibold tracking-wide text-tertiary">
-                    NO WORKING HOURS
-                  </span>
+                  /* said once for the pair, not stamped on each row */
+                  firstOffDay && (
+                    <span className="flex h-full items-center text-h6 font-semibold tracking-wide text-secondary">
+                      NO WORKING HOURS
+                    </span>
+                  )
                 ) : (
                   /* the working window: the denominator, drawn as ground */
                   <div
@@ -133,7 +137,7 @@ function Block({
       onFocus={() => onFocus(seg.id)}
       onBlur={() => onFocus(null)}
       aria-label={`Log ${seg.label}, ${fmt(minutesOf(seg))}, from ${seg.source}`}
-      className={`${shared} cursor-pointer border border-dashed border-data-secondary outline-none hover:brightness-95 focus-visible:ring-2 focus-visible:ring-accent ${
+      className={`${shared} cursor-pointer border border-dashed border-data-secondary outline-none hover:brightness-95 focus-visible:ring-2 focus-visible:ring-bg-accent ${
         focused ? "brightness-95" : ""
       }`}
       style={{

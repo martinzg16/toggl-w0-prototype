@@ -96,8 +96,8 @@ function Sidebar() {
  *  prototype is about the week, not the timer, but the week lives under it. */
 function TimerBar() {
   return (
-    <div className="flex h-16 shrink-0 items-center gap-3 border-b border-primary px-4 sm:px-8">
-      <span className="min-w-0 flex-1 truncate text-h3 text-tertiary">What are you working on?</span>
+    <div className="hidden h-16 shrink-0 items-center gap-3 border-b border-primary px-4 sm:flex sm:px-8">
+      <span className="min-w-0 flex-1 truncate text-h3 text-secondary">What are you working on?</span>
       <span className="hidden items-center gap-2 sm:flex">
         {["Task", "Project", "Tags"].map((chip) => (
           <span
@@ -109,7 +109,10 @@ function TimerBar() {
         ))}
       </span>
       <span className="text-p1 font-medium text-primary tabular-nums">0:00:00</span>
-      <span className="flex size-9 shrink-0 flex-center rounded-full bg-accent text-inverted" aria-hidden>
+      <span
+        className="flex size-9 shrink-0 flex-center rounded-full border border-primary text-secondary"
+        aria-hidden
+      >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
           <path d="M5 3.5l8 4.5-8 4.5z" />
         </svg>
