@@ -1,4 +1,4 @@
-import { BAND_END, BAND_START, fmt, minutesOf, type Segment } from "./data";
+import { BAND_END, BAND_START, countedMinutes, fmt, minutesOf, type Segment } from "./data";
 import type { WeekState } from "./logic";
 
 const span = BAND_END - BAND_START;
@@ -82,6 +82,7 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
                     <Block
                       key={seg.id}
                       seg={seg}
+                      logged={state.claimDurations[seg.id]}
                       claimed={state.claimed.has(seg.id)}
                       focused={focused === seg.id}
                       onClaim={onClaim}
@@ -101,20 +102,23 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
 
 function Block({
   seg,
+  logged,
   claimed,
   focused,
   onClaim,
   onFocus,
 }: {
   seg: Segment;
+  logged?: number;
   claimed: boolean;
   focused: boolean;
   onClaim: (id: string) => void;
   onFocus: (id: string | null) => void;
 }) {
   const solid = seg.kind === "tracked" || claimed;
+  const end = logged != null ? seg.start + logged : seg.end;
   const left = pct(seg.start);
-  const width = pct(seg.end) - pct(BAND_START) - (pct(seg.start) - pct(BAND_START));
+  const width = pct(end) - pct(seg.start);
 
   const shared = "absolute inset-y-1 rounded-sm transition-all duration-150";
   const style = { left: `${left}%`, width: `${width}%` };
@@ -124,7 +128,7 @@ function Block({
       <div
         className={`${shared} bg-data`}
         style={style}
-        title={`${seg.label} · ${fmt(minutesOf(seg))}`}
+        title={`${seg.label} · ${fmt(countedMinutes(seg, logged != null ? { [seg.id]: logged } : {}))}`}
       />
     );
   }

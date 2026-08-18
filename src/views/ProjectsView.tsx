@@ -1,7 +1,7 @@
 import { fmt, minutesOf } from "../week/data";
 import type { App } from "../store";
 import { ArrowIcon } from "../week/Icons";
-import { KINDS } from "../lib/model";
+import { KINDS, money } from "../lib/model";
 
 /** The estimate captured in onboarding, and what the week has done to it. */
 export function ProjectsView({ app }: { app: App }) {
@@ -69,6 +69,30 @@ export function ProjectsView({ app }: { app: App }) {
               className="w-20 rounded border border-primary bg-primary px-2.5 py-1.5 text-p1 text-primary tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-bg-accent"
             />
             <span className="text-p1 text-secondary">hours a week</span>
+          </span>
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-h6 font-semibold tracking-wide text-secondary">
+            HOURLY RATE — TURNS THE WEEK INTO MONEY
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="text-p1 text-secondary">$</span>
+            <input
+              type="number"
+              min={0}
+              placeholder="—"
+              value={s.projectRate ?? ""}
+              onChange={(e) => app.setRate(e.target.value === "" ? null : Math.max(0, Number(e.target.value)))}
+              aria-label="Hourly rate"
+              className="w-24 rounded border border-primary bg-primary px-2.5 py-1.5 text-p1 text-primary tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-bg-accent"
+            />
+            <span className="text-p1 text-secondary">an hour</span>
+          </span>
+          <span className="text-p2 text-secondary">
+            {s.projectRate
+              ? `This week's deviation is worth ${money(Math.abs(tracked - est) / 60 * s.projectRate)} at this rate.`
+              : "Without a rate, This week reports hours only. Add one and the same deviation reads as money."}
           </span>
         </label>
 

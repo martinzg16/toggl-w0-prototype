@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { PROJECT, fmt, minutesOf } from "./data";
+import { PROJECT, countedMinutes, fmt, minutesOf } from "./data";
+import { proposeDuration } from "../lib/model";
 import type { App } from "../store";
 import {
   daysTracked,
@@ -22,10 +23,11 @@ export function WeekView({ app }: { app: App }) {
       today: store.today,
       claimed: store.claimed,
       week: store.week,
+      claimDurations: store.claimDurations,
       projectName: store.projectName,
       estimate: store.projectEstimate,
     }),
-    [store.today, store.claimed, store.week, store.projectName, store.projectEstimate],
+    [store.today, store.claimed, store.claimDurations, store.week, store.projectName, store.projectEstimate],
   );
   const today = store.today;
   const setToday = app.setToday;
@@ -37,8 +39,18 @@ export function WeekView({ app }: { app: App }) {
   const est = store.projectEstimate;
   const said = statement(state);
 
-  const claim = app.claim;
+  const [logging, setLogging] = useState<{ seg: import("./data").Segment; dayIndex: number } | null>(null);
   const claimAll = () => app.claimMany(gaps.map(({ seg }) => seg.id));
+
+  /* Everything already settled this week is the evidence a proposal draws on. */
+  const history = store.week
+    .flatMap((d) => d.segments)
+    .filter((sg) => sg.kind === "tracked" || store.claimed.has(sg.id))
+    .map((sg) => ({
+      label: sg.label,
+      minutes: countedMinutes(sg, store.claimDurations),
+      slotMinutes: sg.kind === "calendar" ? minutesOf(sg) : undefined,
+    }));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" style={PROJECT.colour as React.CSSProperties}>
@@ -66,14 +78,22 @@ export function WeekView({ app }: { app: App }) {
         {/* The estimate as a length, not a number. */}
         <EstimateBar tracked={tracked} missing={missing} estimate={est} />
 
-        <Ribbon state={state} onClaim={claim} focused={focused} onFocus={setFocused} />
+        <Ribbon
+          state={state}
+          onClaim={(id) => {
+            const found = store.week.flatMap((d, i) => d.segments.map((sg) => ({ sg, i }))).find((x) => x.sg.id === id);
+            if (found) setLogging({ seg: found.sg, dayIndex: found.i });
+          }}
+          focused={focused}
+          onFocus={setFocused}
+        />
 
         {gaps.length > 0 && (
           <Repair
             gaps={gaps}
             focused={focused}
             onFocus={setFocused}
-            onClaim={claim}
+            onOpen={(seg, dayIndex) => setLogging({ seg, dayIndex })}
             onClaimAll={claimAll}
             total={missing}
             week={store.week}
@@ -91,6 +111,19 @@ export function WeekView({ app }: { app: App }) {
           )}
         </div>
       </div>
+
+      {logging && (
+        <LogDialog
+          seg={logging.seg}
+          day={store.week[logging.dayIndex].weekday}
+          history={history}
+          onCancel={() => setLogging(null)}
+          onConfirm={(minutes) => {
+            app.claim(logging.seg.id, minutes);
+            setLogging(null);
+          }}
+        />
+      )}
 
       <Scrubber today={today} onChange={setToday} week={store.week} />
     </div>
@@ -137,7 +170,7 @@ function Repair({
   gaps,
   focused,
   onFocus,
-  onClaim,
+  onOpen,
   onClaimAll,
   total,
   week,
@@ -146,7 +179,7 @@ function Repair({
   gaps: { seg: import("./data").Segment; dayIndex: number }[];
   focused: string | null;
   onFocus: (id: string | null) => void;
-  onClaim: (id: string) => void;
+  onOpen: (seg: import("./data").Segment, dayIndex: number) => void;
   onClaimAll: () => void;
   total: number;
 }) {
@@ -171,7 +204,7 @@ function Repair({
           <li key={seg.id}>
             <button
               type="button"
-              onClick={() => onClaim(seg.id)}
+              onClick={() => onOpen(seg, dayIndex)}
               onMouseEnter={() => onFocus(seg.id)}
               onMouseLeave={() => onFocus(null)}
               onFocus={() => onFocus(seg.id)}
@@ -210,6 +243,96 @@ function Expansion({ onAdd }: { onAdd: () => void }) {
         <ArrowIcon className="size-3.5" />
       </button>
     </section>
+  );
+}
+
+/**
+ * A booked slot says when something was scheduled, not how long it took.
+ * Rather than laundering that into tracked time, propose a duration from the
+ * evidence and let the user settle it.
+ */
+function LogDialog({
+  seg, day, history, onCancel, onConfirm,
+}: {
+  seg: import("./data").Segment;
+  day: string;
+  history: { label: string; minutes: number; slotMinutes?: number }[];
+  onCancel: () => void;
+  onConfirm: (minutes: number) => void;
+}) {
+  const slot = minutesOf(seg);
+  const proposal = proposeDuration({ id: seg.id, label: seg.label, slotMinutes: slot }, history);
+  const [mins, setMins] = useState(proposal.minutes);
+  const step = (d: number) => setMins((m) => Math.max(15, Math.min(600, m + d)));
+
+  return (
+    <div
+      className="fixed inset-0 z-40 flex items-center justify-center bg-dark/40 px-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Log ${seg.label}`}
+      onClick={onCancel}
+    >
+      <div
+        className="w-full max-w-100 rounded-md border border-primary bg-primary p-5 shadow-raised-50"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="text-h6 font-semibold tracking-wide text-secondary">
+          {day.toUpperCase()} · FROM YOUR CALENDAR
+        </p>
+        <h2 className="mt-1 text-h4 font-semibold text-primary">{seg.label}</h2>
+        <p className="mt-1 text-p2 leading-relaxed text-secondary">{proposal.reason}</p>
+
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => step(-15)}
+            aria-label="15 minutes less"
+            className="flex size-9 shrink-0 flex-center rounded border border-primary text-p1 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+          >
+            −
+          </button>
+          <span className="min-w-24 text-center font-display text-h2 text-primary tabular-nums">
+            {fmt(mins)}
+          </span>
+          <button
+            type="button"
+            onClick={() => step(15)}
+            aria-label="15 minutes more"
+            className="flex size-9 shrink-0 flex-center rounded border border-primary text-p1 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+          >
+            +
+          </button>
+          {mins !== slot && (
+            <button
+              type="button"
+              onClick={() => setMins(slot)}
+              className="ml-auto rounded px-2 py-1.5 text-p2 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+            >
+              Use the {fmt(slot)} slot
+            </button>
+          )}
+        </div>
+
+        <div className="mt-5 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="rounded px-3 py-2 text-p1 text-secondary outline-none transition-colors hover:bg-primary-hover hover:text-primary focus-visible:ring-2 focus-visible:ring-bg-accent"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => onConfirm(mins)}
+            autoFocus
+            className="ml-auto rounded bg-accent px-4 py-2 text-p1 font-medium text-inverted outline-none transition-colors hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
+          >
+            Log {fmt(mins)}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

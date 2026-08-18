@@ -1,5 +1,7 @@
 import { COMPANIONS, type App } from "../store";
-import { KINDS, readWeek, summarise, TONE_CLASS, type WeekProject } from "../lib/model";
+import {
+  KINDS, money, readWeek, revenueAtRisk, revenueImpact, summarise, TONE_CLASS, type WeekProject,
+} from "../lib/model";
 import { AlertIcon, CheckIcon } from "../week/Icons";
 import { minutesOf } from "../week/data";
 
@@ -22,6 +24,7 @@ export function WeekVerdict({ app }: { app: App }) {
     id: "mine",
     name: s.projectName,
     kind: s.projectKind,
+    rate: s.projectRate,
     planned: s.recalibrated.mine ?? s.projectEstimate / 60,
     tracked: Math.round(tracked * 10) / 10,
     colour: {},
@@ -31,6 +34,9 @@ export function WeekVerdict({ app }: { app: App }) {
     s.recalibrated[p.id] != null ? { ...p, planned: s.recalibrated[p.id] } : p,
   );
   const week = summarise(projects, s.dismissed);
+  const atRisk = revenueAtRisk(projects, s.dismissed);
+  /** the prompt is about the user's own project, not the fixtures beside it */
+  const priced = Boolean(s.projectRate);
 
   if (s.paceSkipped && s.projectEstimate === 0) {
     return (
@@ -73,6 +79,18 @@ export function WeekVerdict({ app }: { app: App }) {
         )}
       </p>
 
+      {week.flagged.length > 0 && priced && atRisk > 0 && (
+        <p className="mt-2 text-p1 text-secondary">
+          <span className="font-medium text-error">{money(atRisk)}</span> of it is money — margin
+          spent or hours you carried without billing.
+        </p>
+      )}
+      {!priced && (
+        <p className="mt-2 text-p2 text-secondary">
+          Add an hourly rate in Projects and these hours read as money.
+        </p>
+      )}
+
       <ol className="mt-8 flex flex-col">
         {projects.map((p) => (
           <Row
@@ -112,6 +130,7 @@ function Row({
   onKeep: () => void;
 }) {
   const reading = readWeek(project.kind, project.planned, project.tracked);
+  const impact = revenueImpact(project.kind, project.planned, project.tracked, project.rate ?? null);
   const tone = TONE_CLASS[reading.tone];
   const scale = Math.max(project.planned, project.tracked) || 1;
   const kindLabel = KINDS.find((k) => k.id === project.kind)!.label;
@@ -141,6 +160,11 @@ function Row({
       <div>
         <p className={`text-p1 font-medium ${tone.text}`}>{reading.headline}</p>
         <p className="text-p2 leading-snug text-secondary">{reading.detail}</p>
+        {impact && (
+          <p className={`mt-1 text-p2 font-medium ${impact.adverse ? "text-error" : "text-success"}`}>
+            {impact.label}
+          </p>
+        )}
       </div>
 
       {actionable && (
