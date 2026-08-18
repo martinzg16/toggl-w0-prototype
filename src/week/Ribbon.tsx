@@ -1,4 +1,4 @@
-import { BAND_END, BAND_START, WEEK, fmt, minutesOf, type Segment } from "./data";
+import { BAND_END, BAND_START, fmt, minutesOf, type Segment } from "./data";
 import type { WeekState } from "./logic";
 
 const span = BAND_END - BAND_START;
@@ -35,11 +35,12 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
       </div>
 
       <div className="flex flex-col">
-        {WEEK.map((day, i) => {
+        {state.week.map((day, i) => {
           const isPast = i <= state.today;
           const isToday = i === state.today;
           const offDay = day.workEnd === day.workStart;
-          const firstOffDay = offDay && WEEK[i - 1]?.workEnd !== WEEK[i - 1]?.workStart;
+          const prev = state.week[i - 1];
+          const firstOffDay = offDay && prev?.workEnd !== prev?.workStart;
           const workLeft = pct(day.workStart);
           const workRight = pct(day.workEnd);
 

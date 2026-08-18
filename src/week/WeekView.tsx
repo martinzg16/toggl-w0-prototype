@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { PROJECT, WEEK, fmt, minutesOf } from "./data";
+import { PROJECT, fmt, minutesOf } from "./data";
+import type { App } from "../store";
 import {
   daysTracked,
   statement,
@@ -11,30 +12,33 @@ import {
 import { Ribbon } from "./Ribbon";
 import { ArrowIcon, CalendarIcon, CheckIcon, PlusIcon } from "./Icons";
 
-export function WeekView() {
-  // Opens mid-week on purpose: the cold reviewer must see the whole mechanism
-  // at once — filled time, a hole, and the repair — before touching anything.
-  // The scrubber rewinds to day 1 for anyone who wants the run-up.
-  const [today, setToday] = useState(2);
-  const [claimed, setClaimed] = useState<Set<string>>(new Set());
+export function WeekView({ app }: { app: App }) {
+  const { s: store } = app;
   const [focused, setFocused] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
 
-  const state: WeekState = useMemo(() => ({ today, claimed }), [today, claimed]);
+  const state: WeekState = useMemo(
+    () => ({
+      today: store.today,
+      claimed: store.claimed,
+      week: store.week,
+      projectName: store.projectName,
+      estimate: store.projectEstimate,
+    }),
+    [store.today, store.claimed, store.week, store.projectName, store.projectEstimate],
+  );
+  const today = store.today;
+  const setToday = app.setToday;
 
   const tracked = trackedMinutes(state);
   const missing = unclaimedMinutes(state);
   const gaps = unclaimedSegments(state);
   const days = daysTracked(state);
-  const est = PROJECT.estimateMinutes;
+  const est = store.projectEstimate;
   const said = statement(state);
 
-  const claim = (id: string) => setClaimed((prev) => new Set(prev).add(id));
-  const claimAll = () => setClaimed((prev) => {
-    const next = new Set(prev);
-    gaps.forEach(({ seg }) => next.add(seg.id));
-    return next;
-  });
+  const claim = app.claim;
+  const claimAll = () => app.claimMany(gaps.map(({ seg }) => seg.id));
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" style={PROJECT.colour as React.CSSProperties}>
@@ -72,6 +76,7 @@ export function WeekView() {
             onClaim={claim}
             onClaimAll={claimAll}
             total={missing}
+            week={store.week}
           />
         )}
 
@@ -87,7 +92,7 @@ export function WeekView() {
         </div>
       </div>
 
-      <Scrubber today={today} onChange={setToday} />
+      <Scrubber today={today} onChange={setToday} week={store.week} />
     </div>
   );
 }
@@ -135,7 +140,9 @@ function Repair({
   onClaim,
   onClaimAll,
   total,
+  week,
 }: {
+  week: import("./data").Day[];
   gaps: { seg: import("./data").Segment; dayIndex: number }[];
   focused: string | null;
   onFocus: (id: string | null) => void;
@@ -173,7 +180,7 @@ function Repair({
                 focused === seg.id ? "bg-primary-hover" : "hover:bg-primary-hover"
               }`}
             >
-              <span className="w-10 shrink-0 text-p2 text-secondary tabular-nums">{WEEK[dayIndex].weekday}</span>
+              <span className="w-10 shrink-0 text-p2 text-secondary tabular-nums">{week[dayIndex].weekday}</span>
               <span className="min-w-0 flex-1 truncate text-p1 text-primary">{seg.label}</span>
               <span className="shrink-0 text-p2 text-secondary tabular-nums">{fmt(minutesOf(seg))}</span>
               <span className="flex shrink-0 items-center gap-1 rounded bg-secondary px-2 py-1 text-h6 font-semibold tracking-wide text-secondary transition-opacity sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-visible:opacity-100">
@@ -206,14 +213,16 @@ function Expansion({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-function Scrubber({ today, onChange }: { today: number; onChange: (i: number) => void }) {
+function Scrubber({
+  today, onChange, week,
+}: { today: number; onChange: (i: number) => void; week: import("./data").Day[] }) {
   return (
     <div className="flex shrink-0 flex-col gap-2 border-t border-primary bg-secondary px-4 py-3 sm:flex-row sm:items-center sm:gap-3 sm:px-8">
       <span className="whitespace-nowrap text-h6 font-semibold tracking-wide text-secondary">
         STEP THROUGH WEEK ONE
       </span>
       <div className="flex flex-1 gap-1 lg:flex-none" role="group" aria-label="Step through the week">
-        {WEEK.map((d, i) => (
+        {week.map((d, i) => (
           <button
             key={d.weekday}
             type="button"
