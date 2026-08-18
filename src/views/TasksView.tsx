@@ -28,6 +28,7 @@ export function TasksView({ app }: { app: App }) {
         <button
           type="button"
           onClick={() => setAdding(true)}
+          data-tour="add-task"
           className="ml-auto flex items-center gap-1.5 rounded-md bg-accent px-4 py-2 text-p1 font-medium text-inverted outline-none transition-colors hover:bg-accent-hover focus-visible:ring-2 focus-visible:ring-bg-accent"
         >
           <PlusIcon className="size-3.5" /> Add task
