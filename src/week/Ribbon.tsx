@@ -16,7 +16,7 @@ export function Ribbon({ state, onClaim, focused, onFocus }: Props) {
     <div className="flex flex-col">
       <div className="flex">
         <div className="w-16 shrink-0" />
-        <div className="relative h-4 flex-1">
+        <div className="relative h-3.5 flex-1">
           {[9, 12, 15, 18].map((hr) => {
             const last = hr === 18;
             return (

@@ -43,9 +43,9 @@ export function WeekView({ app }: { app: App }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col" style={PROJECT.colour as React.CSSProperties}>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 sm:px-8 sm:py-8">
+        <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-5 sm:px-8 sm:py-6">
           {/* The sentence. It is the headline, and it changes every day. */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
             <h1 className="max-w-[38ch] text-balance font-display text-h2 leading-tight text-primary">
             {said.line}
           </h1>
@@ -104,7 +104,7 @@ function EstimateBar({ tracked, missing, estimate }: { tracked: number; missing:
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="relative flex h-8 w-full overflow-hidden rounded bg-secondary">
+      <div className="relative flex h-7 w-full overflow-hidden rounded bg-secondary">
         <div className="h-full bg-data transition-all duration-300 ease-out" style={{ width: w(tracked) }} />
         <div
           className="h-full transition-all duration-300 ease-out"
@@ -151,7 +151,7 @@ function Repair({
   total: number;
 }) {
   return (
-    <section className="flex flex-col gap-3 border-t border-primary pt-6">
+    <section className="flex flex-col gap-2 border-t border-primary pt-5">
       <div className="flex items-center justify-between">
         <h2 className="flex items-center gap-2 text-h6 font-semibold tracking-wide text-secondary">
           <CalendarIcon className="size-3.5" />
